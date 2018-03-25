@@ -1,0 +1,37 @@
+package: github.com/bpineau/katafygio
+import:
+- package: k8s.io/client-go
+  version: ~6.0.0
+  subpackages:
+  - kubernetes
+  - plugin/pkg/client/auth/gcp
+  - rest
+  - tools/clientcmd
+  - tools/cache
+  - util/homedir
+  - util/workqueue
+- package: k8s.io/api
+  subpackages:
+  - apps/v1beta1
+  - apps/v1
+  - api/core/v1
+- package: k8s.io/apimachinery
+  subpackages:
+  - pkg/apis/meta/v1
+  - pkg/runtime
+  - pkg/util/runtime
+  - pkg/util/wait
+  - pkg/watch
+- package: github.com/spf13/cobra
+  version: ~0.0.1
+- package: github.com/spf13/viper
+  version: ~1.0.0
+- package: github.com/spf13/pflag
+  version: ~1.0.0
+- package: github.com/sirupsen/logrus
+  version: ~1.0.4
+  subpackages:
+  - hooks/syslog
+  - hooks/test
+- package: github.com/ghodss/yaml
+  version: ^1.0.0

@@ -1,0 +1,4 @@
+FROM alpine:3.7
+RUN apk --no-cache add ca-certificates
+COPY katafygio /usr/bin/
+ENTRYPOINT ["/usr/bin/katafygio"]

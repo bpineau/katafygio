@@ -1,0 +1,22 @@
+builds:
+  -
+    ldflags: -s -w -X github.com/bpineau/katafygio/cmd.version={{.Version}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+
+release:
+  # don't autopublish
+  draft: true
+
+dockers:
+  -
+    image: bpineau/katafygio
+    goos: linux
+    goarch: amd64
+    latest: true
+    dockerfile: Dockerfile.goreleaser

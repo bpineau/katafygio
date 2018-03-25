@@ -1,0 +1,14 @@
+language: go
+go:
+  - 1.9.x
+
+install:
+  - make tools
+  - make deps
+
+script:
+  - make lint
+  - make test
+  - make coverall
+  - make install
+
