@@ -1,7 +1,8 @@
-// git stores changes a in a git repository
 // I'd love a working pure Go implementation. I can't find any though, src-d/go-git
 // being innapropriate due to https://github.com/src-d/go-git/issues/793 and
 // https://github.com/src-d/go-git/issues/785 .
+
+// Package git stores changes a in a git repository
 package git
 
 import (
@@ -17,9 +18,10 @@ import (
 
 const (
 	timeoutCommands = 60 * time.Second
-	CheckDelay      = 10 * time.Second
+	checkInterval   = 10 * time.Second
 )
 
+// Store will maintain a git repository off dumped kube objects
 type Store struct {
 	Logger   *logrus.Logger
 	URL      string
@@ -29,10 +31,11 @@ type Store struct {
 	Msg      string
 }
 
+// New instantiate a new Store
 func New(config *config.KdnConfig) *Store {
 	return &Store{
 		Logger:   config.Logger,
-		URL:      config.GitUrl,
+		URL:      config.GitURL,
 		LocalDir: config.LocalDir,
 		Author:   "Katafygio", // XXX maybe this could be a cli option
 		Email:    "katafygio@localhost",
@@ -40,17 +43,17 @@ func New(config *config.KdnConfig) *Store {
 	}
 }
 
+// Watch maintains a directory content committed
 func (s *Store) Watch() {
-	checkTick := time.NewTicker(CheckDelay).C
+	checkTick := time.NewTicker(checkInterval).C
 	for {
-		select {
-		case <-checkTick:
-			s.commandAndPush()
-		}
+		<-checkTick
+		s.commitAndPush()
 
 	}
 }
 
+// Git wraps the git command
 func (s *Store) Git(args ...string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutCommands)
 	defer cancel()
@@ -66,6 +69,7 @@ func (s *Store) Git(args ...string) error {
 	return nil
 }
 
+// Status tests the git status of a repository
 func (s *Store) Status() (changed bool, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutCommands)
 	defer cancel()
@@ -85,15 +89,21 @@ func (s *Store) Status() (changed bool, err error) {
 	return false, nil
 }
 
+// Clone does git clone, or git init (when there's no GiURL to clone from)
 func (s *Store) Clone() error {
 	err := os.MkdirAll(s.LocalDir, 0700)
 	if err != nil {
 		return fmt.Errorf("failed to created %s: %v", s.LocalDir, err)
 	}
 
-	err = s.Git("clone", s.URL, s.LocalDir)
+	if s.URL == "" {
+		err = s.Git("init", s.LocalDir)
+	} else {
+		err = s.Git("clone", s.URL, s.LocalDir)
+	}
+
 	if err != nil {
-		return fmt.Errorf("failed to clone %s in %s: %v", s.URL, s.LocalDir, err)
+		return fmt.Errorf("failed to init or clone in %s: %v", s.LocalDir, err)
 	}
 
 	err = s.Git("config", "user.name", s.Author)
@@ -111,6 +121,7 @@ func (s *Store) Clone() error {
 	return nil
 }
 
+// Commit git commit all the directory's changes
 func (s *Store) Commit() (changed bool, err error) {
 	changed, err = s.Status()
 	if err != nil {
@@ -123,35 +134,39 @@ func (s *Store) Commit() (changed bool, err error) {
 
 	err = s.Git("add", "-A")
 	if err != nil {
-		return false, fmt.Errorf("failed to add -A: %v", err)
+		return false, fmt.Errorf("failed to git add -A: %v", err)
 	}
 
 	err = s.Git("commit", "-m", s.Msg)
 	if err != nil {
-		return false, fmt.Errorf("failed to commit: %v", err)
+		return false, fmt.Errorf("failed to git commit: %v", err)
 	}
 
 	return true, nil
 }
 
+// Push git push to the origin
 func (s *Store) Push() error {
 	err := s.Git("push")
 	if err != nil {
-		return fmt.Errorf("failed to push: %v", err)
+		return fmt.Errorf("failed to git push: %v", err)
 	}
 
 	return nil
 }
 
-func (s *Store) commandAndPush() {
+func (s *Store) commitAndPush() {
 	changed, err := s.Commit()
 	if err != nil {
-		s.Logger.Warnf("failed to commit: %v", err)
+		s.Logger.Warn(err)
 	}
-	if changed {
-		err := s.Push()
-		if err != nil {
-			s.Logger.Warnf("failed to push: %v", err)
-		}
+
+	if !changed || s.URL == "" {
+		return
+	}
+
+	err = s.Push()
+	if err != nil {
+		s.Logger.Warn(err)
 	}
 }

@@ -28,47 +28,50 @@ func processNextEvent(config *config.KdnConfig, chans []chan controllers.Event) 
 	for i, ch := range chans {
 		cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ch)}
 	}
-	chosen, value, ok := reflect.Select(cases)
-	if !ok { // closed channel
-		return
-	}
-	_ = chosen //ch := chans[chosen]
-
-	val := value.Interface().(controllers.Event)
-
-	for _, kind := range config.Exclude {
-		if strings.Compare(strings.ToLower(kind), val.Kind) == 0 {
-			return
-		}
-	}
-
-	for _, obj := range config.ExcludeObj {
-		if strings.Compare(strings.ToLower(obj), val.Kind+":"+val.Key) == 0 {
-			return
-		}
-	}
-
-	config.Logger.Debugf("kind=%s name=%s", val.Kind, val.Key)
-
-	if config.DryRun {
+	_, value, ok := reflect.Select(cases)
+	if !ok {
 		return
 	}
 
-	path, err := getPath(config.LocalDir, val)
+	ev := value.Interface().(controllers.Event)
+
+	if shouldIgnore(config, ev) {
+		return
+	}
+
+	config.Logger.Debugf("kind=%s name=%s", ev.Kind, ev.Key)
+
+	path, err := getPath(config.LocalDir, ev)
 	if err != nil {
-		config.Logger.Errorf("failed to get %s path: %v", val.Key, err)
+		config.Logger.Errorf("failed to get %s path: %v", ev.Key, err)
 	}
 
-	switch val.Action {
+	switch ev.Action {
 	case controllers.Upsert:
-		err = save(path, val.Obj)
+		err = save(path, ev.Obj)
 	case controllers.Delete:
 		err = remove(path)
 	}
 
 	if err != nil {
-		config.Logger.Errorf("failed to delete or save %s: %v", val.Key, err)
+		config.Logger.Errorf("failed to delete or save %s: %v", ev.Key, err)
 	}
+}
+
+func shouldIgnore(config *config.KdnConfig, ev controllers.Event) bool {
+	for _, kind := range config.ExcludeKind {
+		if strings.Compare(strings.ToLower(kind), ev.Kind) == 0 {
+			return true
+		}
+	}
+
+	for _, obj := range config.ExcludeObject {
+		if strings.Compare(strings.ToLower(obj), ev.Kind+":"+ev.Key) == 0 {
+			return true
+		}
+	}
+
+	return config.DryRun
 }
 
 func getPath(root string, ev controllers.Event) (string, error) {

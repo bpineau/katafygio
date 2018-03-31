@@ -4,5 +4,6 @@
 *.swp
 *.swo
 /vendor/
+kubernetes-backup
 dist/*
 katafygio

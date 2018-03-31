@@ -30,10 +30,10 @@ var (
 	logServer string
 	filter    string
 	localDir  string
-	gitUrl    string
+	gitURL    string
 	healthP   int
 	resync    int
-	exclude   []string
+	exclkind  []string
 	exclobj   []string
 
 	// FakeCS uses the client-go testing clientset
@@ -55,15 +55,15 @@ var (
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conf := &config.KdnConfig{
-				DryRun:     viper.GetBool("dry-run"),
-				Logger:     klog.New(viper.GetString("log.level"), viper.GetString("log.server"), viper.GetString("log.output")),
-				LocalDir:   viper.GetString("local-dir"),
-				GitUrl:     viper.GetString("git-url"),
-				Filter:     viper.GetString("filter"),
-				Exclude:    viper.GetStringSlice("exclude"),
-				ExcludeObj: viper.GetStringSlice("exclude-object"),
-				HealthPort: viper.GetInt("healthcheck-port"),
-				ResyncIntv: time.Duration(viper.GetInt("resync-interval")) * time.Second,
+				DryRun:        viper.GetBool("dry-run"),
+				Logger:        klog.New(viper.GetString("log.level"), viper.GetString("log.server"), viper.GetString("log.output")),
+				LocalDir:      viper.GetString("local-dir"),
+				GitURL:        viper.GetString("git-url"),
+				Filter:        viper.GetString("filter"),
+				ExcludeKind:   viper.GetStringSlice("exclude-kind"),
+				ExcludeObject: viper.GetStringSlice("exclude-object"),
+				HealthPort:    viper.GetInt("healthcheck-port"),
+				ResyncIntv:    time.Duration(viper.GetInt("resync-interval")) * time.Second,
 			}
 			if FakeCS {
 				conf.ClientSet = config.FakeClientSet()
@@ -96,10 +96,10 @@ func init() {
 	defaultCfg := "/etc/katafygio/" + appName + ".yaml"
 	RootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", defaultCfg, "Configuration file")
 
-	RootCmd.PersistentFlags().StringVarP(&apiServer, "api-server", "s", "", "Kube api server url")
+	RootCmd.PersistentFlags().StringVarP(&apiServer, "api-server", "s", "", "Kubernetes api-server url")
 	bindPFlag("api-server", "api-server")
 
-	RootCmd.PersistentFlags().StringVarP(&kubeConf, "kube-config", "k", "", "Kube config path")
+	RootCmd.PersistentFlags().StringVarP(&kubeConf, "kube-config", "k", "", "Kubernetes config path")
 	bindPFlag("kube-config", "kube-config")
 	if err := viper.BindEnv("kube-config", "KUBECONFIG"); err != nil {
 		log.Fatal("Failed to bind cli argument:", err)
@@ -117,19 +117,19 @@ func init() {
 	RootCmd.PersistentFlags().StringVarP(&logServer, "log-server", "r", "", "Log server (if using syslog)")
 	bindPFlag("log.server", "log-server")
 
-	RootCmd.PersistentFlags().StringVarP(&localDir, "local-dir", "e", "./kubernetes-backup", "Local directory")
+	RootCmd.PersistentFlags().StringVarP(&localDir, "local-dir", "e", "./kubernetes-backup", "Where to dump yaml files")
 	bindPFlag("local-dir", "local-dir")
 
-	RootCmd.PersistentFlags().StringVarP(&gitUrl, "git-url", "g", "", "Git repository URL")
+	RootCmd.PersistentFlags().StringVarP(&gitURL, "git-url", "g", "", "Git repository URL")
 	bindPFlag("git-url", "git-url")
 
-	RootCmd.PersistentFlags().StringSliceVarP(&exclude, "exclude", "x", nil, "Ressource type to exclude. Eg. 'deployment' (may be specified several times)")
-	bindPFlag("exclude", "exclude")
+	RootCmd.PersistentFlags().StringSliceVarP(&exclkind, "exclude-kind", "x", nil, "Ressource kind to exclude. Eg. 'deployment' (can be specified several times)")
+	bindPFlag("exclude-kind", "exclude-kind")
 
-	RootCmd.PersistentFlags().StringSliceVarP(&exclobj, "exclude-object", "y", nil, "Object to exclude. Eg. 'configmap:kube-system/kube-dns' (may be specified several times)")
+	RootCmd.PersistentFlags().StringSliceVarP(&exclobj, "exclude-object", "y", nil, "Object to exclude. Eg. 'configmap:kube-system/kube-dns' (can be specified several times)")
 	bindPFlag("exclude-object", "exclude-object")
 
-	RootCmd.PersistentFlags().StringVarP(&filter, "filter", "l", "", "Label filter")
+	RootCmd.PersistentFlags().StringVarP(&filter, "filter", "l", "", "Label filter. Select only objects matching the label.")
 	bindPFlag("filter", "filter")
 
 	RootCmd.PersistentFlags().IntVarP(&healthP, "healthcheck-port", "P", 0, "Port for answering healthchecks")
