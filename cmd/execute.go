@@ -30,8 +30,11 @@ var (
 	logServer string
 	filter    string
 	localDir  string
+	gitUrl    string
 	healthP   int
 	resync    int
+	exclude   []string
+	exclobj   []string
 
 	// FakeCS uses the client-go testing clientset
 	FakeCS bool
@@ -55,7 +58,10 @@ var (
 				DryRun:     viper.GetBool("dry-run"),
 				Logger:     klog.New(viper.GetString("log.level"), viper.GetString("log.server"), viper.GetString("log.output")),
 				LocalDir:   viper.GetString("local-dir"),
+				GitUrl:     viper.GetString("git-url"),
 				Filter:     viper.GetString("filter"),
+				Exclude:    viper.GetStringSlice("exclude"),
+				ExcludeObj: viper.GetStringSlice("exclude-object"),
 				HealthPort: viper.GetInt("healthcheck-port"),
 				ResyncIntv: time.Duration(viper.GetInt("resync-interval")) * time.Second,
 			}
@@ -88,39 +94,48 @@ func init() {
 	RootCmd.AddCommand(versionCmd)
 
 	defaultCfg := "/etc/katafygio/" + appName + ".yaml"
-	RootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", defaultCfg, "configuration file")
+	RootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", defaultCfg, "Configuration file")
 
-	RootCmd.PersistentFlags().StringVarP(&apiServer, "api-server", "s", "", "kube api server url")
+	RootCmd.PersistentFlags().StringVarP(&apiServer, "api-server", "s", "", "Kube api server url")
 	bindPFlag("api-server", "api-server")
 
-	RootCmd.PersistentFlags().StringVarP(&kubeConf, "kube-config", "k", "", "kube config path")
+	RootCmd.PersistentFlags().StringVarP(&kubeConf, "kube-config", "k", "", "Kube config path")
 	bindPFlag("kube-config", "kube-config")
 	if err := viper.BindEnv("kube-config", "KUBECONFIG"); err != nil {
 		log.Fatal("Failed to bind cli argument:", err)
 	}
 
-	RootCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "dry-run mode")
+	RootCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "Dry-run mode: don't store anything.")
 	bindPFlag("dry-run", "dry-run")
 
-	RootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "v", "info", "log level")
+	RootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "v", "info", "Log level")
 	bindPFlag("log.level", "log-level")
 
-	RootCmd.PersistentFlags().StringVarP(&logOutput, "log-output", "o", "stderr", "log output")
+	RootCmd.PersistentFlags().StringVarP(&logOutput, "log-output", "o", "stderr", "Log output")
 	bindPFlag("log.output", "log-output")
 
-	RootCmd.PersistentFlags().StringVarP(&logServer, "log-server", "r", "", "log server (if using syslog)")
+	RootCmd.PersistentFlags().StringVarP(&logServer, "log-server", "r", "", "Log server (if using syslog)")
 	bindPFlag("log.server", "log-server")
 
 	RootCmd.PersistentFlags().StringVarP(&localDir, "local-dir", "e", "./kubernetes-backup", "Local directory")
 	bindPFlag("local-dir", "local-dir")
 
+	RootCmd.PersistentFlags().StringVarP(&gitUrl, "git-url", "g", "", "Git repository URL")
+	bindPFlag("git-url", "git-url")
+
+	RootCmd.PersistentFlags().StringSliceVarP(&exclude, "exclude", "x", nil, "Ressource type to exclude. Eg. 'deployment' (may be specified several times)")
+	bindPFlag("exclude", "exclude")
+
+	RootCmd.PersistentFlags().StringSliceVarP(&exclobj, "exclude-object", "y", nil, "Object to exclude. Eg. 'configmap:kube-system/kube-dns' (may be specified several times)")
+	bindPFlag("exclude-object", "exclude-object")
+
 	RootCmd.PersistentFlags().StringVarP(&filter, "filter", "l", "", "Label filter")
 	bindPFlag("filter", "filter")
 
-	RootCmd.PersistentFlags().IntVarP(&healthP, "healthcheck-port", "p", 0, "port for answering healthchecks")
+	RootCmd.PersistentFlags().IntVarP(&healthP, "healthcheck-port", "P", 0, "Port for answering healthchecks")
 	bindPFlag("healthcheck-port", "healthcheck-port")
 
-	RootCmd.PersistentFlags().IntVarP(&resync, "resync-interval", "i", 900, "resync interval in seconds (0 to disable)")
+	RootCmd.PersistentFlags().IntVarP(&resync, "resync-interval", "i", 900, "Resync interval in seconds (0 to disable)")
 	bindPFlag("resync-interval", "resync-interval")
 }
 

@@ -21,11 +21,20 @@ type KdnConfig struct {
 	// ClientSet represents a connection to a Kubernetes cluster
 	ClientSet kubernetes.Interface
 
+	// GitUrl is the address of the git repository
+	GitUrl string
+
 	// LocalDir is the local path where we'll serialize cluster objets
 	LocalDir string
 
 	// Filter holds a facultative Kubernetes selector
 	Filter string
+
+	// Exclude holds a list of resources types we won't dump
+	Exclude []string
+
+	// ExcludeObj holds a list of objects we won't dump
+	ExcludeObj []string
 
 	// HealthPort is the facultative healthcheck port
 	HealthPort int

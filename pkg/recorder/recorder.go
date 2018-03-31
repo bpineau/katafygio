@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 
 	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/controllers"
@@ -18,38 +19,55 @@ func Watch(config *config.KdnConfig, chans []chan controllers.Event) {
 	}
 
 	for {
-		cases := make([]reflect.SelectCase, len(chans))
-		for i, ch := range chans {
-			cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ch)}
-		}
-		chosen, value, ok := reflect.Select(cases)
-		if !ok { // closed channel
-			continue
-		}
-		_ = chosen //ch := chans[chosen]
+		processNextEvent(config, chans)
+	}
+}
 
-		val := value.Interface().(controllers.Event)
-		path, err := getPath(config.LocalDir, val)
-		if err != nil {
-			config.Logger.Errorf("failed to get %s path: %v", val.Key, err)
-		}
+func processNextEvent(config *config.KdnConfig, chans []chan controllers.Event) {
+	cases := make([]reflect.SelectCase, len(chans))
+	for i, ch := range chans {
+		cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ch)}
+	}
+	chosen, value, ok := reflect.Select(cases)
+	if !ok { // closed channel
+		return
+	}
+	_ = chosen //ch := chans[chosen]
 
-		config.Logger.Debugf("kind=%s name=%s", val.Kind, val.Key)
+	val := value.Interface().(controllers.Event)
 
-		if config.DryRun {
-			continue
+	for _, kind := range config.Exclude {
+		if strings.Compare(strings.ToLower(kind), val.Kind) == 0 {
+			return
 		}
+	}
 
-		switch val.Action {
-		case controllers.Upsert:
-			err = save(path, val.Obj)
-		case controllers.Delete:
-			err = remove(path)
+	for _, obj := range config.ExcludeObj {
+		if strings.Compare(strings.ToLower(obj), val.Kind+":"+val.Key) == 0 {
+			return
 		}
+	}
 
-		if err != nil {
-			config.Logger.Errorf("failed to delete or save %s: %v", val.Key, err)
-		}
+	config.Logger.Debugf("kind=%s name=%s", val.Kind, val.Key)
+
+	if config.DryRun {
+		return
+	}
+
+	path, err := getPath(config.LocalDir, val)
+	if err != nil {
+		config.Logger.Errorf("failed to get %s path: %v", val.Key, err)
+	}
+
+	switch val.Action {
+	case controllers.Upsert:
+		err = save(path, val.Obj)
+	case controllers.Delete:
+		err = remove(path)
+	}
+
+	if err != nil {
+		config.Logger.Errorf("failed to delete or save %s: %v", val.Key, err)
 	}
 }
 

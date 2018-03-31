@@ -12,6 +12,7 @@ import (
 	"github.com/bpineau/katafygio/pkg/controllers"
 	"github.com/bpineau/katafygio/pkg/health"
 	"github.com/bpineau/katafygio/pkg/recorder"
+	"github.com/bpineau/katafygio/pkg/store/git"
 )
 
 // Run launchs the effective controllers goroutines
@@ -19,6 +20,14 @@ func Run(config *config.KdnConfig) {
 	wg := sync.WaitGroup{}
 	wg.Add(len(controllers.AllControllers))
 	defer wg.Wait()
+
+	repos := git.New(config)
+	err := repos.Clone()
+	if err != nil {
+		config.Logger.Fatalf("failed to clone git: %v", err)
+	}
+
+	go repos.Watch()
 
 	var chans []chan controllers.Event
 

@@ -55,13 +55,16 @@ func (c *Controller) Marshal(obj interface{}) (string, error) {
 
 	// some attributes, added by the cluster, shouldn't be exported
 	//f.Status.Reset()
+	f.ResourceVersion = ""
+	f.SelfLink = ""
+	f.UID = ""
 
 	y, err := yaml.Marshal(f)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("apiVersion: %s\nkind: %s\n%s\n",
+	return fmt.Sprintf("apiVersion: %s\nkind: %s\n%s",
 		c.Conf.ClientSet.RbacV1().RESTClient().APIVersion().String(),
 		"ClusterRoleBinding",
 		string(y)), nil
