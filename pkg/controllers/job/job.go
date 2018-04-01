@@ -2,12 +2,13 @@ package job
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/controllers"
 
-	appsv1 "k8s.io/api/batch/v1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/api/batch/v1"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
@@ -15,13 +16,15 @@ import (
 	"github.com/ghodss/yaml"
 )
 
+const objectKind = "Job"
+
 // Controller monitors Kubernetes' deployments objects in the cluster
 type Controller struct {
 	controllers.CommonController
 }
 
 func init() {
-	controllers.Register("job", New)
+	controllers.Register(strings.ToLower(objectKind), New)
 }
 
 // New initialize controller
@@ -29,20 +32,20 @@ func New(conf *config.KdnConfig, ch chan<- controllers.Event) controllers.Contro
 	c := Controller{}
 	c.CommonController = controllers.CommonController{
 		Conf: conf,
-		Name: "job",
+		Name: strings.ToLower(objectKind),
 		Send: ch,
 	}
 
 	client := c.Conf.ClientSet
-	c.ObjType = &appsv1.Job{}
-	c.MarshalF = c.Marshal // that's our own Marshal() implementation
-	selector := meta_v1.ListOptions{LabelSelector: conf.Filter}
+	c.ObjType = &v1.Job{}
+	c.MarshalF = c.Marshal
+	selector := meta.ListOptions{LabelSelector: conf.Filter}
 	c.ListWatch = &cache.ListWatch{
-		ListFunc: func(options meta_v1.ListOptions) (runtime.Object, error) {
-			return client.BatchV1().Jobs(meta_v1.NamespaceAll).List(selector)
+		ListFunc: func(options meta.ListOptions) (runtime.Object, error) {
+			return client.BatchV1().Jobs(meta.NamespaceAll).List(selector)
 		},
-		WatchFunc: func(options meta_v1.ListOptions) (watch.Interface, error) {
-			return client.BatchV1().Jobs(meta_v1.NamespaceAll).Watch(selector)
+		WatchFunc: func(options meta.ListOptions) (watch.Interface, error) {
+			return client.BatchV1().Jobs(meta.NamespaceAll).Watch(selector)
 		},
 	}
 
@@ -51,9 +54,8 @@ func New(conf *config.KdnConfig, ch chan<- controllers.Event) controllers.Contro
 
 // Marshal filter irrelevant fields from the object, and export it as yaml string
 func (c *Controller) Marshal(obj interface{}) (string, error) {
-	f := obj.(*appsv1.Job).DeepCopy()
+	f := obj.(*v1.Job).DeepCopy()
 
-	// some attributes, added by the cluster, shouldn't be exported
 	f.Status.Reset()
 	f.ResourceVersion = ""
 	f.SelfLink = ""
@@ -65,7 +67,5 @@ func (c *Controller) Marshal(obj interface{}) (string, error) {
 	}
 
 	return fmt.Sprintf("apiVersion: %s\nkind: %s\n%s",
-		c.Conf.ClientSet.BatchV1().RESTClient().APIVersion().String(),
-		"Job",
-		string(y)), nil
+		v1.SchemeGroupVersion.String(), objectKind, string(y)), nil
 }

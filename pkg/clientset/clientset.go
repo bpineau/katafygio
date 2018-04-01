@@ -16,6 +16,7 @@ import (
 )
 
 func buildConfig(apiserver string, kubeconfig string) (*rest.Config, error) {
+	// if we're not provided a kubeconfig path, try to find one in user's home
 	if kubeconfig == "" {
 		if home := homedir.HomeDir(); home != "" {
 			if _, err := os.Stat(filepath.Join(home, ".kube", "config")); err == nil {
@@ -24,10 +25,12 @@ func buildConfig(apiserver string, kubeconfig string) (*rest.Config, error) {
 		}
 	}
 
+	// if we're provided an api-server url, or found a kubeconfig file, use that
 	if apiserver != "" || kubeconfig != "" {
 		return clientcmd.BuildConfigFromFlags(apiserver, kubeconfig)
 	}
 
+	// else assume we're running in cluster
 	return rest.InClusterConfig()
 }
 

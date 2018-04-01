@@ -1,4 +1,4 @@
-package horizontalpodautoscaler
+package limitrange
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/controllers"
 
-	"k8s.io/api/autoscaling/v1"
+	v1 "k8s.io/api/core/v1"
 	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
@@ -16,9 +16,9 @@ import (
 	"github.com/ghodss/yaml"
 )
 
-const objectKind = "HorizontalPodAutoscaler"
+const objectKind = "LimitRange"
 
-// Controller monitors Kubernetes' objects in the cluster
+// Controller monitors Kubernetes' limitrange objects in the cluster
 type Controller struct {
 	controllers.CommonController
 }
@@ -37,15 +37,15 @@ func New(conf *config.KdnConfig, ch chan<- controllers.Event) controllers.Contro
 	}
 
 	client := c.Conf.ClientSet
-	c.ObjType = &v1.HorizontalPodAutoscaler{}
+	c.ObjType = &v1.LimitRange{}
 	c.MarshalF = c.Marshal
 	selector := meta.ListOptions{LabelSelector: conf.Filter}
 	c.ListWatch = &cache.ListWatch{
 		ListFunc: func(options meta.ListOptions) (runtime.Object, error) {
-			return client.AutoscalingV1().HorizontalPodAutoscalers(meta.NamespaceAll).List(selector)
+			return client.CoreV1().LimitRanges(meta.NamespaceAll).List(selector)
 		},
 		WatchFunc: func(options meta.ListOptions) (watch.Interface, error) {
-			return client.AutoscalingV1().HorizontalPodAutoscalers(meta.NamespaceAll).Watch(selector)
+			return client.CoreV1().LimitRanges(meta.NamespaceAll).Watch(selector)
 		},
 	}
 
@@ -54,10 +54,10 @@ func New(conf *config.KdnConfig, ch chan<- controllers.Event) controllers.Contro
 
 // Marshal filter irrelevant fields from the object, and export it as yaml string
 func (c *Controller) Marshal(obj interface{}) (string, error) {
-	f := obj.(*v1.HorizontalPodAutoscaler).DeepCopy()
+	f := obj.(*v1.LimitRange).DeepCopy()
 
-	//f.Status.Reset()
 	f.ResourceVersion = ""
+	f.Generation = 0
 	f.SelfLink = ""
 	f.UID = ""
 
