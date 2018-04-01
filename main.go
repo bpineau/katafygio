@@ -24,6 +24,7 @@ import (
 	_ "github.com/bpineau/katafygio/pkg/controllers/poddisruptionbudget"
 	_ "github.com/bpineau/katafygio/pkg/controllers/podsecuritypolicy"
 	_ "github.com/bpineau/katafygio/pkg/controllers/podtemplate"
+	_ "github.com/bpineau/katafygio/pkg/controllers/replicaset"
 	_ "github.com/bpineau/katafygio/pkg/controllers/replicationcontroller"
 	_ "github.com/bpineau/katafygio/pkg/controllers/resourcequota"
 	_ "github.com/bpineau/katafygio/pkg/controllers/rolebinding"
@@ -32,9 +33,6 @@ import (
 	_ "github.com/bpineau/katafygio/pkg/controllers/serviceaccount"
 	_ "github.com/bpineau/katafygio/pkg/controllers/statefulset"
 	_ "github.com/bpineau/katafygio/pkg/controllers/storageclass"
-	// ReplicaSets may consume a lot of memory, and is already subsumed
-	// by Deployments (does anybody creates naked ReplicaSets by hand ?).
-	//_ "github.com/bpineau/katafygio/pkg/controllers/replicaset"
 )
 
 //var privateExitHandler func(code int) = os.Exit
