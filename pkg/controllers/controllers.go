@@ -82,6 +82,21 @@ func Register(name string, ctrl ControllerConstructor) {
 	AllControllers[name] = ctrl
 }
 
+// FilterControllers removes excluded controllers
+func FilterControllers(excluded []string) map[string]ControllerConstructor {
+	filtered := make(map[string]ControllerConstructor)
+
+	for k, v := range AllControllers {
+		filtered[k] = v
+	}
+
+	for _, ctrl := range excluded {
+		delete(filtered, ctrl)
+	}
+
+	return filtered
+}
+
 // Start initialize and launch a controller. The sync.WaitGroup
 // argument is expected to be aknowledged (Done()) at controller
 // termination, when Stop() is called.

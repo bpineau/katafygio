@@ -17,8 +17,10 @@ import (
 
 // Run launchs the effective controllers goroutines
 func Run(config *config.KdnConfig) {
+	ctrlers := controllers.FilterControllers(config.ExcludeKind)
+
 	wg := sync.WaitGroup{}
-	wg.Add(len(controllers.AllControllers))
+	wg.Add(len(ctrlers))
 	defer wg.Wait()
 
 	repos := git.New(config)
@@ -31,7 +33,7 @@ func Run(config *config.KdnConfig) {
 
 	var chans []chan controllers.Event
 
-	for _, c := range controllers.AllControllers {
+	for _, c := range ctrlers {
 		ch := make(chan controllers.Event, 100)
 		chans = append(chans, ch)
 		ctrl := c(config, ch)
