@@ -49,7 +49,6 @@ func (s *Store) Watch() {
 	for {
 		<-checkTick
 		s.commitAndPush()
-
 	}
 }
 

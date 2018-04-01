@@ -135,7 +135,7 @@ func init() {
 	RootCmd.PersistentFlags().IntVarP(&healthP, "healthcheck-port", "P", 0, "Port for answering healthchecks")
 	bindPFlag("healthcheck-port", "healthcheck-port")
 
-	RootCmd.PersistentFlags().IntVarP(&resync, "resync-interval", "i", 900, "Resync interval in seconds (0 to disable)")
+	RootCmd.PersistentFlags().IntVarP(&resync, "resync-interval", "i", 300, "Resync interval in seconds (0 to disable)")
 	bindPFlag("resync-interval", "resync-interval")
 }
 

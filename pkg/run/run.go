@@ -42,7 +42,7 @@ func Run(config *config.KdnConfig) {
 		}(ctrl)
 	}
 
-	go recorder.Watch(config, chans)
+	go recorder.New(config, chans).Watch()
 
 	go func() {
 		if err := health.HeartBeatService(config); err != nil {
