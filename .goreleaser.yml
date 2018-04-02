@@ -13,6 +13,9 @@ release:
   # don't autopublish
   draft: true
 
+archive:
+  format: binary
+
 dockers:
   -
     image: bpineau/katafygio

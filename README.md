@@ -24,12 +24,14 @@ objects, that may bloat the git history.
 
 ```bash
 # Filtering out replicasets and pods since they are managed by Deployments
-# (already archived), secrets to keep them confidential, and the leader-elector
+# (already archived), endpoints (managed by Services), secrets (to keep them
+# confidential), events and node (irrelevant), and the leader-elector
 # configmap that has low value and changes a lot, causing commits churn.
 
 katafygio \
   -g https://user:token@github.com/myorg/myrepos.git -e /tmp/kfdump \
-  -x secret -x pod -x replicaset -y configmap:kube-system/leader-elector
+  -x secret -x pod -x replicaset -x node -x endpoints -x event \
+  -y configmap:kube-system/leader-elector
 ```
 
 ## Supported resources
