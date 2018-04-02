@@ -16,10 +16,31 @@ release:
 archive:
   format: binary
 
+changelog:
+  filters:
+    exclude:
+      - Merge
+
 dockers:
-  -
-    image: bpineau/katafygio
+  - image: bpineau/katafygio
     goos: linux
     goarch: amd64
-    latest: true
     dockerfile: Dockerfile.goreleaser
+    tag_templates:
+      - '{{ .Tag }}'
+      - latest
+
+nfpm:
+  name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}"
+  homepage: https://github.com/bpineau/katafygio
+  description: Discover and continuously backup Kubernetes objets as yaml files in git
+  maintainer: Benjamin Pineau <ben.pineau@gmail.com>
+  license: MIT
+  vendor: Benjamin Pineau
+  formats:
+    - deb
+    - rpm
+  dependencies:
+    - git
+  replacements:
+    amd64: x86_64
