@@ -1,6 +1,5 @@
-// Package clientset initialize a Kubernete's client-go "clientset" (an initialized
-// connection to the Kubernete's api-server) according the configuration.
-package clientset
+// Package client  initialize a Kubernete's client-go rest.Config
+package client
 
 import (
 	"os"
@@ -15,7 +14,8 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
-func buildConfig(apiserver string, kubeconfig string) (*rest.Config, error) {
+// BuildConfig create a *rest.Config
+func BuildConfig(apiserver string, kubeconfig string) (*rest.Config, error) {
 	// if we're not provided a kubeconfig path, try to find one in user's home
 	if kubeconfig == "" {
 		if home := homedir.HomeDir(); home != "" {
@@ -38,7 +38,7 @@ func buildConfig(apiserver string, kubeconfig string) (*rest.Config, error) {
 // It will connect using the optional apiserver or kubeconfig options, or will
 // default to the automatic, in cluster settings.
 func NewClientSet(apiserver string, kubeconfig string) (*kubernetes.Clientset, error) {
-	config, err := buildConfig(apiserver, kubeconfig)
+	config, err := BuildConfig(apiserver, kubeconfig)
 	if err != nil {
 		return nil, err
 	}

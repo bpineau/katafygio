@@ -36,9 +36,6 @@ var (
 	exclkind  []string
 	exclobj   []string
 
-	// FakeCS uses the client-go testing clientset
-	FakeCS bool
-
 	versionCmd = &cobra.Command{
 		Use:   "version",
 		Short: "Print the version number",
@@ -64,9 +61,6 @@ var (
 				ExcludeObject: viper.GetStringSlice("exclude-object"),
 				HealthPort:    viper.GetInt("healthcheck-port"),
 				ResyncIntv:    time.Duration(viper.GetInt("resync-interval")) * time.Second,
-			}
-			if FakeCS {
-				conf.ClientSet = config.FakeClientSet()
 			}
 			err := conf.Init(viper.GetString("api-server"), viper.GetString("kube-config"))
 			if err != nil {

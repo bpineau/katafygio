@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/bpineau/katafygio/config"
-	"github.com/bpineau/katafygio/pkg/controllers"
+	"github.com/bpineau/katafygio/pkg/controller"
 )
 
 type activeFiles map[string]bool
@@ -18,46 +17,58 @@ type activeFiles map[string]bool
 // Listener receive events from controllers and save them to disk as yaml files
 type Listener struct {
 	config      *config.KdnConfig
-	chans       []chan controllers.Event
+	evchan      chan controller.Event
 	actives     activeFiles
 	activesLock sync.RWMutex
+	stopch      chan struct{}
+	donech      chan struct{}
 }
 
 // New creates a new Listener
-func New(config *config.KdnConfig, chans []chan controllers.Event) *Listener {
+func New(config *config.KdnConfig, evchan chan controller.Event) *Listener {
 	return &Listener{
 		config:  config,
-		chans:   chans,
+		evchan:  evchan,
 		actives: activeFiles{},
 	}
 }
 
-// Watch receive events and persists them to disk
-func (w *Listener) Watch() {
+// Start receive events and persists them to disk as files
+func (w *Listener) Start() *Listener {
 	err := os.MkdirAll(filepath.Clean(w.config.LocalDir), 0700)
 	if err != nil {
 		panic(fmt.Sprintf("Can't create directory %s: %v", w.config.LocalDir, err))
 	}
 
-	go w.garbageCollect()
+	go func() {
+		gcTick := time.NewTicker(w.config.ResyncIntv * 2)
+		w.stopch = make(chan struct{})
+		w.donech = make(chan struct{})
+		defer gcTick.Stop()
+		defer close(w.donech)
 
-	for {
-		w.processNextEvent()
-	}
+		for {
+			select {
+			case <-w.stopch:
+				return
+			case ev := <-w.evchan:
+				w.processNextEvent(ev)
+			case <-gcTick.C:
+				w.deleteObsoleteFiles()
+			}
+		}
+	}()
+
+	return w
 }
 
-func (w *Listener) processNextEvent() {
-	cases := make([]reflect.SelectCase, len(w.chans))
-	for i, ch := range w.chans {
-		cases[i] = reflect.SelectCase{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(ch)}
-	}
-	_, value, ok := reflect.Select(cases)
-	if !ok {
-		return
-	}
+func (w *Listener) Stop() {
+	w.config.Logger.Info("Stopping recorder")
+	close(w.stopch)
+	<-w.donech
+}
 
-	ev := value.Interface().(controllers.Event)
-
+func (w *Listener) processNextEvent(ev controller.Event) {
 	if w.shouldIgnore(ev) {
 		return
 	}
@@ -70,9 +81,9 @@ func (w *Listener) processNextEvent() {
 	}
 
 	switch ev.Action {
-	case controllers.Upsert:
+	case controller.Upsert:
 		err = w.save(path, ev.Obj)
-	case controllers.Delete:
+	case controller.Delete:
 		err = w.remove(path)
 	}
 
@@ -81,7 +92,7 @@ func (w *Listener) processNextEvent() {
 	}
 }
 
-func (w *Listener) shouldIgnore(ev controllers.Event) bool {
+func (w *Listener) shouldIgnore(ev controller.Event) bool {
 	for _, kind := range w.config.ExcludeKind {
 		if strings.Compare(strings.ToLower(kind), ev.Kind) == 0 {
 			return true
@@ -97,7 +108,7 @@ func (w *Listener) shouldIgnore(ev controllers.Event) bool {
 	return w.config.DryRun
 }
 
-func getPath(root string, ev controllers.Event) (string, error) {
+func getPath(root string, ev controller.Event) (string, error) {
 	filename := ev.Kind + "-" + filepath.Base(ev.Key) + ".yaml"
 
 	dir, err := filepath.Abs(filepath.Dir(root + "/" + ev.Key))
@@ -148,14 +159,6 @@ func (w *Listener) save(file string, data string) error {
 	}
 
 	return nil
-}
-
-func (w *Listener) garbageCollect() {
-	gcTick := time.NewTicker(w.config.ResyncIntv * 2).C
-	for {
-		<-gcTick
-		w.deleteObsoleteFiles()
-	}
 }
 
 func (w *Listener) deleteObsoleteFiles() {
