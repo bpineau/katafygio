@@ -29,6 +29,8 @@ type Store struct {
 	Author   string
 	Email    string
 	Msg      string
+	stopch   chan struct{}
+	donech   chan struct{}
 }
 
 // New instantiate a new Store
@@ -43,13 +45,38 @@ func New(config *config.KdnConfig) *Store {
 	}
 }
 
-// Watch maintains a directory content committed
-func (s *Store) Watch() {
-	checkTick := time.NewTicker(checkInterval).C
-	for {
-		<-checkTick
-		s.commitAndPush()
+// Start maintains a directory content committed
+func (s *Store) Start() (*Store, error) {
+	s.stopch = make(chan struct{})
+	s.donech = make(chan struct{})
+
+	err := s.Clone()
+	if err != nil {
+		return nil, err
 	}
+
+	go func() {
+		checkTick := time.NewTicker(checkInterval)
+		defer checkTick.Stop()
+		defer close(s.donech)
+
+		for {
+			select {
+			case <-checkTick.C:
+				s.commitAndPush()
+			case <-s.stopch:
+				return
+			}
+		}
+	}()
+
+	return s, nil
+}
+
+func (s *Store) Stop() {
+	s.Logger.Info("Stopping repos")
+	close(s.stopch)
+	<-s.donech
 }
 
 // Git wraps the git command

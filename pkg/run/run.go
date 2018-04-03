@@ -5,11 +5,10 @@ package run
 import (
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"github.com/bpineau/katafygio/config"
-	"github.com/bpineau/katafygio/pkg/controllers"
+	"github.com/bpineau/katafygio/pkg/controller"
 	"github.com/bpineau/katafygio/pkg/health"
 	"github.com/bpineau/katafygio/pkg/recorder"
 	"github.com/bpineau/katafygio/pkg/store/git"
@@ -17,34 +16,15 @@ import (
 
 // Run launchs the effective controllers goroutines
 func Run(config *config.KdnConfig) {
-	ctrlers := controllers.FilterControllers(config.ExcludeKind)
-
-	wg := sync.WaitGroup{}
-	wg.Add(len(ctrlers))
-	defer wg.Wait()
-
-	repos := git.New(config)
-	err := repos.Clone()
+	repos, err := git.New(config).Start()
 	if err != nil {
-		config.Logger.Fatalf("failed to clone git: %v", err)
+		config.Logger.Fatalf("failed to start git repo handler: %v", err)
 	}
 
-	go repos.Watch()
+	evchan := make(chan controller.Event)
 
-	var chans []chan controllers.Event
-
-	for _, c := range ctrlers {
-		ch := make(chan controllers.Event, 100)
-		chans = append(chans, ch)
-		ctrl := c(config, ch)
-
-		go ctrl.Start(&wg)
-		defer func(cont controllers.Controller) {
-			go cont.Stop()
-		}(ctrl)
-	}
-
-	go recorder.New(config, chans).Watch()
+	rec := recorder.New(config, evchan).Start()
+	ctl := controller.NewObserver(config, evchan).Start()
 
 	go func() {
 		if err := health.HeartBeatService(config); err != nil {
@@ -58,4 +38,7 @@ func Run(config *config.KdnConfig) {
 	<-sigterm
 
 	config.Logger.Infof("Stopping all controllers")
+	repos.Stop()
+	ctl.Stop()
+	rec.Stop()
 }

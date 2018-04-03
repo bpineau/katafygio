@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bpineau/katafygio/pkg/clientset"
+	"github.com/bpineau/katafygio/pkg/client"
+
 	"github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 // KdnConfig is the configuration struct, passed to controllers's Init()
@@ -18,8 +18,8 @@ type KdnConfig struct {
 	// Logger should be used to send all logs
 	Logger *logrus.Logger
 
-	// ClientSet represents a connection to a Kubernetes cluster
-	ClientSet kubernetes.Interface
+	// Client represents a connection to a Kubernetes cluster
+	Client *rest.Config
 
 	// GitURL is the address of the git repository
 	GitURL string
@@ -43,23 +43,11 @@ type KdnConfig struct {
 	ResyncIntv time.Duration
 }
 
-// Init initialize the configuration's ClientSet
-func (c *KdnConfig) Init(apiserver string, kubeconfig string) error {
-	var err error
-
-	if c.ClientSet == nil {
-		c.ClientSet, err = clientset.NewClientSet(apiserver, kubeconfig)
-		if err != nil {
-			return fmt.Errorf("Failed init Kubernetes clientset: %+v", err)
-		}
-	}
-
-	// better fail early, if we can't talk to the cluster's api
-	_, err = c.ClientSet.CoreV1().Namespaces().List(metav1.ListOptions{})
+// Init initalize the config
+func (c *KdnConfig) Init(apiserver string, kubeconfig string) (err error) {
+	c.Client, err = client.BuildConfig(apiserver, kubeconfig)
 	if err != nil {
-		return fmt.Errorf("Failed to query Kubernetes api-server: %+v", err)
+		return fmt.Errorf("Failed init Kubernetes clientset: %+v", err)
 	}
-
-	c.Logger.Info("Kubernetes clientset initialized")
 	return nil
 }
