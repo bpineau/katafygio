@@ -5,7 +5,7 @@
 
 katafygio discovers Kubernetes objects (deployments, services, ...),
 and continuously save them as yaml files in a git repository.
-This provides both real time, continuous backups, and changes history.
+This provides real time, continuous backups, and keepds detailled changes history.
 
 ## Usage
 
@@ -34,39 +34,7 @@ katafygio \
   -y configmap:kube-system/leader-elector
 ```
 
-## Supported resources
-
-katafygio will discover and save most Kubernetes objects (except CRD).
-The supported objects kinds are:
-
-* clusterrolebinding
-* configmap
-* controllers.go
-* cronjob
-* daemonset
-* deployment
-* horizontalpodautoscaler
-* ingress
-* job
-* limitrange
-* namespace
-* networkpolicy
-* persistentvolume
-* persistentvolumeclaim
-* pod
-* poddisruptionbudget
-* podsecuritypolicy
-* podtemplate
-* replicaset
-* replicationcontroller
-* resourcequota
-* rolebinding
-* secret
-* service
-* serviceaccount
-* statefulset
-* storageclass
-
+You can also use the [docker image](https://hub.docker.com/r/bpineau/katafygio/).
 
 ## CLI options
 

@@ -148,7 +148,7 @@ func (c *Controller) processItem(key string) error {
 	delete(md, "resourceVersion")
 	delete(md, "generation")
 
-	c.config.Logger.Infof("Found %s/%s [%s]", obj.GetAPIVersion(), obj.GetKind(), key)
+	c.config.Logger.Debugf("Found %s/%s [%s]", obj.GetAPIVersion(), obj.GetKind(), key)
 
 	yml, err := yaml.Marshal(obj)
 	if err != nil {

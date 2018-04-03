@@ -47,6 +47,7 @@ func New(config *config.KdnConfig) *Store {
 
 // Start maintains a directory content committed
 func (s *Store) Start() (*Store, error) {
+	s.Logger.Info("Starting git repository synchronizer")
 	s.stopch = make(chan struct{})
 	s.donech = make(chan struct{})
 
@@ -74,7 +75,7 @@ func (s *Store) Start() (*Store, error) {
 }
 
 func (s *Store) Stop() {
-	s.Logger.Info("Stopping repos")
+	s.Logger.Info("Stopping git repository synchronizer")
 	close(s.stopch)
 	<-s.donech
 }

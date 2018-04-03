@@ -35,6 +35,7 @@ func New(config *config.KdnConfig, evchan chan controller.Event) *Listener {
 
 // Start receive events and persists them to disk as files
 func (w *Listener) Start() *Listener {
+	w.config.Logger.Info("Starting event recorder")
 	err := os.MkdirAll(filepath.Clean(w.config.LocalDir), 0700)
 	if err != nil {
 		panic(fmt.Sprintf("Can't create directory %s: %v", w.config.LocalDir, err))
@@ -63,7 +64,7 @@ func (w *Listener) Start() *Listener {
 }
 
 func (w *Listener) Stop() {
-	w.config.Logger.Info("Stopping recorder")
+	w.config.Logger.Info("Stopping event recorder")
 	close(w.stopch)
 	<-w.donech
 }

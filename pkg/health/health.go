@@ -2,6 +2,7 @@
 package health
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,21 +11,53 @@ import (
 )
 
 type healthHandler struct {
-	conf *config.KdnConfig
+	config *config.KdnConfig
+	donech chan struct{}
+	srv    *http.Server
+}
+
+func New(config *config.KdnConfig) *healthHandler {
+	return &healthHandler{
+		config: config,
+		donech: make(chan struct{}),
+		srv:    nil,
+	}
 }
 
 func (h *healthHandler) healthCheckReply(w http.ResponseWriter, r *http.Request) {
 	if _, err := io.WriteString(w, "ok\n"); err != nil {
-		h.conf.Logger.Warningf("Failed to reply to http healtcheck from %s: %s\n", r.RemoteAddr, err)
+		h.config.Logger.Warningf("Failed to reply to http healtcheck from %s: %s\n", r.RemoteAddr, err)
 	}
 }
 
-// HeartBeatService exposes an http healthcheck handler
-func HeartBeatService(c *config.KdnConfig) error {
-	if c.HealthPort == 0 {
-		return nil
+// Start exposes an http healthcheck handler
+func (h *healthHandler) Start() (*healthHandler, error) {
+	if h.config.HealthPort == 0 {
+		return h, nil
 	}
-	hh := healthHandler{conf: c}
-	http.HandleFunc("/health", hh.healthCheckReply)
-	return http.ListenAndServe(fmt.Sprintf(":%d", c.HealthPort), nil)
+
+	h.srv = &http.Server{Addr: fmt.Sprintf(":%d", h.config.HealthPort)}
+
+	http.HandleFunc("/health", h.healthCheckReply)
+
+	go func() {
+		defer close(h.donech)
+		_ = h.srv.ListenAndServe()
+	}()
+
+	return h, nil
+}
+
+func (h *healthHandler) Stop() {
+	h.config.Logger.Info("Stopping http healtcheck handler")
+	if h.srv == nil {
+		return
+	}
+
+	err := h.srv.Shutdown(context.TODO())
+	if err != nil {
+		h.config.Logger.Warningf("failed to stop http healtcheck handler: %v", err)
+	}
+
+	<-h.donech
 }

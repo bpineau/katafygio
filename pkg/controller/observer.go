@@ -49,6 +49,8 @@ func NewObserver(config *config.KdnConfig, evch chan Event) *ControllerObserver 
 }
 
 func (c *ControllerObserver) Start() *ControllerObserver {
+	c.config.Logger.Info("Starting all kubernetes controllers")
+
 	c.stop = make(chan struct{})
 	c.done = make(chan struct{})
 
@@ -75,6 +77,8 @@ func (c *ControllerObserver) Start() *ControllerObserver {
 }
 
 func (c *ControllerObserver) Stop() {
+	c.config.Logger.Info("Stopping all kubernetes controllers")
+
 	close(c.stop)
 
 	for _, ch := range c.ctrls {

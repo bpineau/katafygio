@@ -16,7 +16,7 @@ import (
 
 // Run launchs the effective controllers goroutines
 func Run(config *config.KdnConfig) {
-	repos, err := git.New(config).Start()
+	repo, err := git.New(config).Start()
 	if err != nil {
 		config.Logger.Fatalf("failed to start git repo handler: %v", err)
 	}
@@ -24,21 +24,20 @@ func Run(config *config.KdnConfig) {
 	evchan := make(chan controller.Event)
 
 	rec := recorder.New(config, evchan).Start()
-	ctl := controller.NewObserver(config, evchan).Start()
+	ctrl := controller.NewObserver(config, evchan).Start()
 
-	go func() {
-		if err := health.HeartBeatService(config); err != nil {
-			config.Logger.Warningf("Healtcheck service failed: %s", err)
-		}
-	}()
+	http, err := health.New(config).Start()
+	if err != nil {
+		config.Logger.Fatalf("failed to start http healtcheck handler: %v", err)
+	}
 
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGTERM)
 	signal.Notify(sigterm, syscall.SIGINT)
 	<-sigterm
 
-	config.Logger.Infof("Stopping all controllers")
-	repos.Stop()
-	ctl.Stop()
+	ctrl.Stop()
+	repo.Stop()
 	rec.Stop()
+	http.Stop()
 }
