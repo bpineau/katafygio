@@ -43,7 +43,7 @@ type KdnConfig struct {
 	ResyncIntv time.Duration
 }
 
-// Init initalize the config
+// Init initialize the config
 func (c *KdnConfig) Init(apiserver string, kubeconfig string) (err error) {
 	c.Client, err = client.BuildConfig(apiserver, kubeconfig)
 	if err != nil {

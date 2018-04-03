@@ -18,7 +18,8 @@ import (
 
 const discoveryInterval = 60 * time.Second
 
-type ControllerObserver struct {
+// Observer manage kubernetes controllers
+type Observer struct {
 	stop   chan struct{}
 	done   chan struct{}
 	evch   chan Event
@@ -38,8 +39,9 @@ type gvk struct {
 
 type resources map[string]*gvk
 
-func NewObserver(config *config.KdnConfig, evch chan Event) *ControllerObserver {
-	return &ControllerObserver{
+// NewObserver creates a new observer, to create an manage Kubernetes controllers
+func NewObserver(config *config.KdnConfig, evch chan Event) *Observer {
+	return &Observer{
 		config: config,
 		evch:   evch,
 		disc:   discovery.NewDiscoveryClientForConfigOrDie(config.Client),
@@ -48,7 +50,8 @@ func NewObserver(config *config.KdnConfig, evch chan Event) *ControllerObserver 
 	}
 }
 
-func (c *ControllerObserver) Start() *ControllerObserver {
+// Start starts the observer in a detached goroutine
+func (c *Observer) Start() *Observer {
 	c.config.Logger.Info("Starting all kubernetes controllers")
 
 	c.stop = make(chan struct{})
@@ -76,7 +79,8 @@ func (c *ControllerObserver) Start() *ControllerObserver {
 	return c
 }
 
-func (c *ControllerObserver) Stop() {
+// Stop halts the observer
+func (c *Observer) Stop() {
 	c.config.Logger.Info("Stopping all kubernetes controllers")
 
 	close(c.stop)
@@ -88,13 +92,13 @@ func (c *ControllerObserver) Stop() {
 	<-c.done
 }
 
-func (c *ControllerObserver) refresh() error {
+func (c *Observer) refresh() error {
 	groups, err := c.disc.ServerResources()
 	if err != nil {
 		return fmt.Errorf("failed to collect server resources: %v", err)
 	}
 
-	for name, res := range c.expandApiResource(groups) {
+	for name, res := range c.expandAPIResource(groups) {
 		if _, ok := c.ctrls[name]; ok {
 			continue
 		}
@@ -125,7 +129,15 @@ func (c *ControllerObserver) refresh() error {
 	return nil
 }
 
-func (c *ControllerObserver) expandApiResource(groups []*metav1.APIResourceList) resources {
+var preferredVersions = map[string]string{
+	"apps:deployment":                   "extensions:deployment",
+	"apps:daemonset":                    "extensions:daemonset",
+	"apps:replicaset":                   "extensions:replicaset",
+	"events:events":                     ":events",
+	"networking.k8s.io:networkpolicies": "extensions:networkpolicies",
+}
+
+func (c *Observer) expandAPIResource(groups []*metav1.APIResourceList) resources {
 	resources := make(map[string]*gvk)
 
 	for _, group := range groups {
@@ -136,9 +148,6 @@ func (c *ControllerObserver) expandApiResource(groups []*metav1.APIResourceList)
 			if strings.ContainsRune(ar.Name, '/') {
 				continue
 			}
-			if strings.ContainsRune(ar.Kind, '/') {
-				continue
-			}
 
 			// remove user filtered objet kinds
 			if isExcluded(c.config.ExcludeKind, ar.Kind) {
@@ -146,15 +155,7 @@ func (c *ControllerObserver) expandApiResource(groups []*metav1.APIResourceList)
 			}
 
 			// only consider resources that are getable, listable an watchable
-			if !strInList(ar.Verbs, "list") {
-				continue
-			}
-
-			if !strInList(ar.Verbs, "get") {
-				continue
-			}
-
-			if !strInList(ar.Verbs, "watch") {
+			if !isSubList(ar.Verbs, []string{"list", "get", "watch"}) {
 				continue
 			}
 
@@ -163,22 +164,12 @@ func (c *ControllerObserver) expandApiResource(groups []*metav1.APIResourceList)
 		}
 	}
 
-	// remove lower priorities cohabitations. cf. kubernetes/cmd/kube-apiserver/app/server.go :
-	// the api server may expose some resources under various api groups for backward compat...
-	if _, ok := resources["apps:deployment"]; ok {
-		delete(resources, "extensions:deployment")
-	}
-	if _, ok := resources["apps:daemonset"]; ok {
-		delete(resources, "extensions:daemonset")
-	}
-	if _, ok := resources["apps:replicaset"]; ok {
-		delete(resources, "extensions:replicaset")
-	}
-	if _, ok := resources["events:events"]; ok {
-		delete(resources, ":events")
-	}
-	if _, ok := resources["networking.k8s.io:networkpolicies"]; ok {
-		delete(resources, "extensions:networkpolicies")
+	// remove lower priorities "cohabitations". cf. kubernetes/cmd/kube-apiserver/app/server.go
+	// (the api server may expose some resources under various api groups for backward compat...)
+	for preferred, obsolete := range preferredVersions {
+		if _, ok := resources[preferred]; ok {
+			delete(resources, obsolete)
+		}
 	}
 
 	return resources
@@ -194,11 +185,15 @@ func isExcluded(excluded []string, name string) bool {
 	return false
 }
 
-func strInList(list []string, str string) bool {
-	for _, s := range list {
-		if strings.Compare(s, str) == 0 {
-			return true
+func isSubList(containing []string, contained []string) bool {
+containing:
+	for _, in := range contained {
+		for _, out := range containing {
+			if strings.Compare(in, out) == 0 {
+				continue containing
+			}
 		}
+		return false
 	}
-	return false
+	return true
 }

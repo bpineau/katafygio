@@ -63,6 +63,7 @@ func (w *Listener) Start() *Listener {
 	return w
 }
 
+// Stop halts the recorder service
 func (w *Listener) Stop() {
 	w.config.Logger.Info("Stopping event recorder")
 	close(w.stopch)

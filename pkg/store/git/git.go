@@ -74,6 +74,7 @@ func (s *Store) Start() (*Store, error) {
 	return s, nil
 }
 
+// Stop stops the git goroutine
 func (s *Store) Stop() {
 	s.Logger.Info("Stopping git repository synchronizer")
 	close(s.stopch)

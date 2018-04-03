@@ -3,9 +3,9 @@
 [![Build Status](https://travis-ci.org/bpineau/katafygio.svg?branch=master)](https://travis-ci.org/bpineau/katafygio)
 [![Go Report Card](https://goreportcard.com/badge/github.com/bpineau/katafygio)](https://goreportcard.com/report/github.com/bpineau/katafygio)
 
-katafygio discovers Kubernetes objects (deployments, services, ...),
+**katafygio** discovers Kubernetes objects (deployments, services, ...),
 and continuously save them as yaml files in a git repository.
-This provides real time, continuous backups, and keepds detailled changes history.
+This provides real time, continuous backups, and keeps detailled changes history.
 
 ## Usage
 
@@ -47,7 +47,7 @@ Flags:
   -y, --exclude-object stringSlice   Object to exclude. Eg. 'configmap:kube-system/kube-dns' (can be specified several times)
   -l, --filter string                Label filter. Select only objects matching the label.
   -g, --git-url string               Git repository URL
-  -P, --healthcheck-port int         Port for answering healthchecks
+  -P, --healthcheck-port int         Port for answering healthchecks on /health
   -h, --help                         help for katafygio
   -k, --kube-config string           Kubernetes config path
   -e, --local-dir string             Where to dump yaml files (default "./kubernetes-backup")

@@ -36,6 +36,7 @@ type Event struct {
 	Obj    string
 }
 
+// Controller is a generic kubernetes controller
 type Controller struct {
 	evchan   chan Event
 	name     string
@@ -44,6 +45,7 @@ type Controller struct {
 	informer cache.SharedIndexInformer
 }
 
+// NewController return an untyped, generic Kubernetes controller
 func NewController(lw cache.ListerWatcher, evchan chan Event, name string, config *config.KdnConfig) *Controller {
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 
@@ -78,6 +80,7 @@ func NewController(lw cache.ListerWatcher, evchan chan Event, name string, confi
 	return &Controller{evchan, name, config, queue, informer}
 }
 
+// Run starts the controller in the foreground
 func (c *Controller) Run(stopCh <-chan struct{}) {
 	c.config.Logger.Infof("Starting %s controller", c.name)
 	defer utilruntime.HandleCrash()

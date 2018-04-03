@@ -10,28 +10,30 @@ import (
 	"github.com/bpineau/katafygio/config"
 )
 
-type healthHandler struct {
+// Listener is an http health check listener
+type Listener struct {
 	config *config.KdnConfig
 	donech chan struct{}
 	srv    *http.Server
 }
 
-func New(config *config.KdnConfig) *healthHandler {
-	return &healthHandler{
+// New create a new http health check listener
+func New(config *config.KdnConfig) *Listener {
+	return &Listener{
 		config: config,
 		donech: make(chan struct{}),
 		srv:    nil,
 	}
 }
 
-func (h *healthHandler) healthCheckReply(w http.ResponseWriter, r *http.Request) {
+func (h *Listener) healthCheckReply(w http.ResponseWriter, r *http.Request) {
 	if _, err := io.WriteString(w, "ok\n"); err != nil {
 		h.config.Logger.Warningf("Failed to reply to http healtcheck from %s: %s\n", r.RemoteAddr, err)
 	}
 }
 
 // Start exposes an http healthcheck handler
-func (h *healthHandler) Start() (*healthHandler, error) {
+func (h *Listener) Start() (*Listener, error) {
 	if h.config.HealthPort == 0 {
 		return h, nil
 	}
@@ -48,7 +50,8 @@ func (h *healthHandler) Start() (*healthHandler, error) {
 	return h, nil
 }
 
-func (h *healthHandler) Stop() {
+// Stop halts the http health check handler
+func (h *Listener) Stop() {
 	h.config.Logger.Info("Stopping http healtcheck handler")
 	if h.srv == nil {
 		return
