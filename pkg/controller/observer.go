@@ -25,7 +25,7 @@ type Observer struct {
 	evch   chan Event
 	disc   *discovery.DiscoveryClient
 	cpool  dynamic.ClientPool
-	ctrls  map[string]chan<- struct{}
+	ctrls  map[string]*Controller
 	config *config.KdnConfig
 }
 
@@ -46,7 +46,7 @@ func NewObserver(config *config.KdnConfig, evch chan Event) *Observer {
 		evch:   evch,
 		disc:   discovery.NewDiscoveryClientForConfigOrDie(config.Client),
 		cpool:  dynamic.NewDynamicClientPool(config.Client),
-		ctrls:  make(map[string]chan<- struct{}),
+		ctrls:  make(map[string]*Controller),
 	}
 }
 
@@ -85,8 +85,8 @@ func (c *Observer) Stop() {
 
 	close(c.stop)
 
-	for _, ch := range c.ctrls {
-		close(ch)
+	for _, c := range c.ctrls {
+		c.Stop()
 	}
 
 	<-c.done
@@ -120,10 +120,8 @@ func (c *Observer) refresh() error {
 			},
 		}
 
-		stop := make(chan struct{})
-		c.ctrls[name] = stop
-		name := strings.ToLower(res.ar.Kind)
-		go NewController(lw, c.evch, name, c.config).Run(stop)
+		c.ctrls[name] = NewController(lw, c.evch, strings.ToLower(res.ar.Kind), c.config)
+		go c.ctrls[name].Start()
 	}
 
 	return nil
@@ -160,8 +158,8 @@ func (c *Observer) expandAndFilterAPIResources(groups []*metav1.APIResourceList)
 				continue
 			}
 
-			g := &gvk{group: gv.Group, version: gv.Version, kind: ar.Kind, gv: gv, ar: ar}
-			resources[strings.ToLower(gv.Group+":"+ar.Kind)] = g
+			resource := &gvk{group: gv.Group, version: gv.Version, kind: ar.Kind, gv: gv, ar: ar}
+			resources[strings.ToLower(gv.Group+":"+ar.Kind)] = resource
 		}
 	}
 

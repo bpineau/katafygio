@@ -38,6 +38,8 @@ type Event struct {
 
 // Controller is a generic kubernetes controller
 type Controller struct {
+	stopCh   chan struct{}
+	doneCh   chan struct{}
 	evchan   chan Event
 	name     string
 	config   *config.KdnConfig
@@ -77,27 +79,42 @@ func NewController(lw cache.ListerWatcher, evchan chan Event, name string, confi
 		},
 	})
 
-	return &Controller{evchan, name, config, queue, informer}
+	return &Controller{
+		stopCh:   make(chan struct{}),
+		doneCh:   make(chan struct{}),
+		evchan:   evchan,
+		name:     name,
+		config:   config,
+		queue:    queue,
+		informer: informer,
+	}
 }
 
-// Run starts the controller in the foreground
-func (c *Controller) Run(stopCh <-chan struct{}) {
+// Start launchs the controller in the background
+func (c *Controller) Start() {
 	c.config.Logger.Infof("Starting %s controller", c.name)
 	defer utilruntime.HandleCrash()
-	defer c.queue.ShutDown()
 
-	go c.informer.Run(stopCh)
+	go c.informer.Run(c.stopCh)
 
-	if !cache.WaitForCacheSync(stopCh, c.informer.HasSynced) {
+	if !cache.WaitForCacheSync(c.stopCh, c.informer.HasSynced) {
 		utilruntime.HandleError(fmt.Errorf("Timed out waiting for caches to sync"))
 		return
 	}
 
-	wait.Until(c.runWorker, time.Second, stopCh)
-	// XXX needs a sync.wg to wait for that
+	go wait.Until(c.runWorker, time.Second, c.stopCh)
+}
+
+// Stop halts the controller
+func (c *Controller) Stop() {
+	close(c.stopCh)
+	c.queue.ShutDown()
+	<-c.doneCh
+	c.config.Logger.Infof("Stopping %s controller", c.name)
 }
 
 func (c *Controller) runWorker() {
+	defer close(c.doneCh)
 	for c.processNextItem() {
 		// continue looping
 	}

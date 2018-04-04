@@ -1,5 +1,5 @@
 // Package run implements the main katafygio's loop, by
-// launching the healthcheck service and all known controllers.
+// the services and controllers.
 package run
 
 import (
@@ -14,7 +14,7 @@ import (
 	"github.com/bpineau/katafygio/pkg/store/git"
 )
 
-// Run launchs the effective controllers goroutines
+// Run launchs the services
 func Run(config *config.KdnConfig) {
 	repo, err := git.New(config).Start()
 	if err != nil {
@@ -23,7 +23,7 @@ func Run(config *config.KdnConfig) {
 
 	evchan := make(chan controller.Event)
 
-	rec := recorder.New(config, evchan).Start()
+	reco := recorder.New(config, evchan).Start()
 	ctrl := controller.NewObserver(config, evchan).Start()
 
 	http, err := health.New(config).Start()
@@ -38,6 +38,6 @@ func Run(config *config.KdnConfig) {
 
 	ctrl.Stop()
 	repo.Stop()
-	rec.Stop()
+	reco.Stop()
 	http.Stop()
 }

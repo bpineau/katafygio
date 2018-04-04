@@ -38,6 +38,8 @@ func (h *Listener) Start() (*Listener, error) {
 		return h, nil
 	}
 
+	h.config.Logger.Info("Starting http healtcheck handler")
+
 	h.srv = &http.Server{Addr: fmt.Sprintf(":%d", h.config.HealthPort)}
 
 	http.HandleFunc("/health", h.healthCheckReply)
@@ -52,10 +54,11 @@ func (h *Listener) Start() (*Listener, error) {
 
 // Stop halts the http health check handler
 func (h *Listener) Stop() {
-	h.config.Logger.Info("Stopping http healtcheck handler")
 	if h.srv == nil {
 		return
 	}
+
+	h.config.Logger.Info("Stopping http healtcheck handler")
 
 	err := h.srv.Shutdown(context.TODO())
 	if err != nil {
