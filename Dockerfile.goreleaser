@@ -1,4 +1,5 @@
 FROM alpine:3.7
 RUN apk --no-cache add ca-certificates git
 COPY katafygio /usr/bin/
+USER nobody
 ENTRYPOINT ["/usr/bin/katafygio"]

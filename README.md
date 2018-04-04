@@ -47,7 +47,7 @@ Flags:
   -y, --exclude-object stringSlice   Object to exclude. Eg. 'configmap:kube-system/kube-dns' (can be specified several times)
   -l, --filter string                Label filter. Select only objects matching the label.
   -g, --git-url string               Git repository URL
-  -P, --healthcheck-port int         Port for answering healthchecks on /health
+  -p, --healthcheck-port int         Port for answering healthchecks on /health
   -h, --help                         help for katafygio
   -k, --kube-config string           Kubernetes config path
   -e, --local-dir string             Where to dump yaml files (default "./kubernetes-backup")

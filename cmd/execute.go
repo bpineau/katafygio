@@ -19,7 +19,7 @@ import (
 const appName = "katafygio"
 
 var (
-	version = "0.2.0 (HEAD)"
+	version = "0.3.0"
 
 	cfgFile   string
 	apiServer string
@@ -126,7 +126,7 @@ func init() {
 	RootCmd.PersistentFlags().StringVarP(&filter, "filter", "l", "", "Label filter. Select only objects matching the label.")
 	bindPFlag("filter", "filter")
 
-	RootCmd.PersistentFlags().IntVarP(&healthP, "healthcheck-port", "P", 0, "Port for answering healthchecks")
+	RootCmd.PersistentFlags().IntVarP(&healthP, "healthcheck-port", "p", 0, "Port for answering healthchecks")
 	bindPFlag("healthcheck-port", "healthcheck-port")
 
 	RootCmd.PersistentFlags().IntVarP(&resync, "resync-interval", "i", 300, "Resync interval in seconds (0 to disable)")
