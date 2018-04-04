@@ -86,7 +86,7 @@ func (s *Store) Git(args ...string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutCommands)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd := exec.CommandContext(ctx, "git", args...) // #nosec
 	cmd.Dir = s.LocalDir
 
 	out, err := cmd.CombinedOutput()
@@ -102,7 +102,7 @@ func (s *Store) Status() (changed bool, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutCommands)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "git", "status", "--porcelain")
+	cmd := exec.CommandContext(ctx, "git", "status", "--porcelain") // #nosec
 	cmd.Dir = s.LocalDir
 
 	out, err := cmd.CombinedOutput()

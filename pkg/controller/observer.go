@@ -98,7 +98,7 @@ func (c *Observer) refresh() error {
 		return fmt.Errorf("failed to collect server resources: %v", err)
 	}
 
-	for name, res := range c.expandAPIResource(groups) {
+	for name, res := range c.expandAndFilterAPIResources(groups) {
 		if _, ok := c.ctrls[name]; ok {
 			continue
 		}
@@ -134,10 +134,11 @@ var preferredVersions = map[string]string{
 	"apps:daemonset":                    "extensions:daemonset",
 	"apps:replicaset":                   "extensions:replicaset",
 	"events:events":                     ":events",
+	"extensions:podsecuritypolicies":    "policy:podsecuritypolicies",
 	"networking.k8s.io:networkpolicies": "extensions:networkpolicies",
 }
 
-func (c *Observer) expandAPIResource(groups []*metav1.APIResourceList) resources {
+func (c *Observer) expandAndFilterAPIResources(groups []*metav1.APIResourceList) resources {
 	resources := make(map[string]*gvk)
 
 	for _, group := range groups {
