@@ -48,7 +48,7 @@ var (
 	RootCmd = &cobra.Command{
 		Use:   appName,
 		Short: "Backup Kubernetes cluster as yaml files",
-		Long:  "Backup Kubernetes cluster as yaml files",
+		Long:  "Backup Kubernetes cluster as yaml files in a git repository",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conf := &config.KdnConfig{
@@ -64,7 +64,7 @@ var (
 			}
 			err := conf.Init(viper.GetString("api-server"), viper.GetString("kube-config"))
 			if err != nil {
-				return fmt.Errorf("Failed to initialize the configuration: %+v", err)
+				return fmt.Errorf("Failed to initialize the configuration: %v", err)
 			}
 			run.Run(conf)
 			return nil
@@ -150,7 +150,7 @@ func initConfig() {
 	}
 
 	// allow config params through prefixed env variables
-	viper.SetEnvPrefix("KB")
+	viper.SetEnvPrefix("KF")
 	replacer := strings.NewReplacer("-", "_", ".", "_DOT_")
 	viper.SetEnvKeyReplacer(replacer)
 	viper.AutomaticEnv()
