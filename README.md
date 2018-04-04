@@ -57,6 +57,17 @@ Flags:
   -i, --resync-interval int          Resync interval in seconds (0 to disable) (default 300)
 ```
 
+## Config file and env variables
+
+All settings can be passed by cli, or environment variable, or in a yaml configuration file
+(thanks to Viper and Cobra libs). The environment are the same as cli options, in uppercase,
+prefixed by "KF", and with underscore instead of dashs. ie.:
+
+```
+export KF_GIT_URL=https://user:token@github.com/myorg/myrepos.git
+export KF_LOCAL_DIR=/tmp/kfdump
+```
+
 ## Build
 
 Assuming you have go 1.10 and glide in the path, and GOPATH configured:
