@@ -110,7 +110,7 @@ func (c *Observer) refresh() error {
 
 		client := cl.Resource(res.ar.DeepCopy(), metav1.NamespaceAll)
 
-		selector := metav1.ListOptions{}
+		selector := metav1.ListOptions{LabelSelector: c.config.Filter}
 		lw := &cache.ListWatch{
 			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 				return client.List(selector)
