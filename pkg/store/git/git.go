@@ -29,6 +29,7 @@ type Store struct {
 	Author   string
 	Email    string
 	Msg      string
+	DryRun   bool
 	stopch   chan struct{}
 	donech   chan struct{}
 }
@@ -42,6 +43,7 @@ func New(config *config.KfConfig) *Store {
 		Author:   "Katafygio", // XXX maybe this could be a cli option
 		Email:    "katafygio@localhost",
 		Msg:      "Kubernetes cluster change",
+		DryRun:   config.DryRun,
 	}
 }
 
@@ -83,6 +85,10 @@ func (s *Store) Stop() {
 
 // Git wraps the git command
 func (s *Store) Git(args ...string) error {
+	if s.DryRun {
+		return nil
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutCommands)
 	defer cancel()
 
@@ -99,6 +105,10 @@ func (s *Store) Git(args ...string) error {
 
 // Status tests the git status of a repository
 func (s *Store) Status() (changed bool, err error) {
+	if s.DryRun {
+		return false, nil
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutCommands)
 	defer cancel()
 
@@ -119,6 +129,10 @@ func (s *Store) Status() (changed bool, err error) {
 
 // Clone does git clone, or git init (when there's no GiURL to clone from)
 func (s *Store) Clone() error {
+	if s.DryRun {
+		return nil
+	}
+
 	err := os.MkdirAll(s.LocalDir, 0700)
 	if err != nil {
 		return fmt.Errorf("failed to created %s: %v", s.LocalDir, err)
