@@ -45,7 +45,7 @@ type KdnConfig struct {
 
 // Init initialize the config
 func (c *KdnConfig) Init(apiserver string, kubeconfig string) (err error) {
-	c.Client, err = client.BuildConfig(apiserver, kubeconfig)
+	c.Client, err = client.NewRestConfig(apiserver, kubeconfig)
 	if err != nil {
 		return fmt.Errorf("Failed init Kubernetes clientset: %+v", err)
 	}
