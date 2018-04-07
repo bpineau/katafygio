@@ -42,13 +42,13 @@ type Controller struct {
 	doneCh   chan struct{}
 	evchan   chan Event
 	name     string
-	config   *config.KdnConfig
+	config   *config.KfConfig
 	queue    workqueue.RateLimitingInterface
 	informer cache.SharedIndexInformer
 }
 
 // NewController return an untyped, generic Kubernetes controller
-func NewController(lw cache.ListerWatcher, evchan chan Event, name string, config *config.KdnConfig) *Controller {
+func NewController(lw cache.ListerWatcher, evchan chan Event, name string, config *config.KfConfig) *Controller {
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 
 	informer := cache.NewSharedIndexInformer(

@@ -15,7 +15,7 @@ import (
 )
 
 // Run launchs the services
-func Run(config *config.KdnConfig) {
+func Run(config *config.KfConfig) {
 	repo, err := git.New(config).Start()
 	if err != nil {
 		config.Logger.Fatalf("failed to start git repo handler: %v", err)

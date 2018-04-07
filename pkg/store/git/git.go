@@ -34,7 +34,7 @@ type Store struct {
 }
 
 // New instantiate a new Store
-func New(config *config.KdnConfig) *Store {
+func New(config *config.KfConfig) *Store {
 	return &Store{
 		Logger:   config.Logger,
 		URL:      config.GitURL,

@@ -51,7 +51,7 @@ var (
 		Long:  "Backup Kubernetes cluster as yaml files in a git repository",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conf := &config.KdnConfig{
+			conf := &config.KfConfig{
 				DryRun:        viper.GetBool("dry-run"),
 				Logger:        klog.New(viper.GetString("log.level"), viper.GetString("log.server"), viper.GetString("log.output")),
 				LocalDir:      viper.GetString("local-dir"),
