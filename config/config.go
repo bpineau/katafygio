@@ -10,8 +10,8 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// KdnConfig is the configuration struct, passed to controllers's Init()
-type KdnConfig struct {
+// KfConfig is the configuration struct, passed to controllers's Init()
+type KfConfig struct {
 	// When DryRun is true, we display but don't really send notifications
 	DryRun bool
 
@@ -44,7 +44,7 @@ type KdnConfig struct {
 }
 
 // Init initialize the config
-func (c *KdnConfig) Init(apiserver string, kubeconfig string) (err error) {
+func (c *KfConfig) Init(apiserver string, kubeconfig string) (err error) {
 	c.Client, err = client.NewRestConfig(apiserver, kubeconfig)
 	if err != nil {
 		return fmt.Errorf("Failed init Kubernetes clientset: %+v", err)

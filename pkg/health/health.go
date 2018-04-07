@@ -12,13 +12,13 @@ import (
 
 // Listener is an http health check listener
 type Listener struct {
-	config *config.KdnConfig
+	config *config.KfConfig
 	donech chan struct{}
 	srv    *http.Server
 }
 
 // New create a new http health check listener
-func New(config *config.KdnConfig) *Listener {
+func New(config *config.KfConfig) *Listener {
 	return &Listener{
 		config: config,
 		donech: make(chan struct{}),

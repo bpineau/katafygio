@@ -26,7 +26,7 @@ type Observer struct {
 	disc   *discovery.DiscoveryClient
 	cpool  dynamic.ClientPool
 	ctrls  map[string]*Controller
-	config *config.KdnConfig
+	config *config.KfConfig
 }
 
 type gvk struct {
@@ -40,7 +40,7 @@ type gvk struct {
 type resources map[string]*gvk
 
 // NewObserver creates a new observer, to create an manage Kubernetes controllers
-func NewObserver(config *config.KdnConfig, evch chan Event) *Observer {
+func NewObserver(config *config.KfConfig, evch chan Event) *Observer {
 	return &Observer{
 		config: config,
 		evch:   evch,
@@ -164,7 +164,7 @@ func (c *Observer) expandAndFilterAPIResources(groups []*metav1.APIResourceList)
 	}
 
 	// remove lower priorities "cohabitations". cf. kubernetes/cmd/kube-apiserver/app/server.go
-	// (the api server may expose some resources under various api groups for backward compat...)
+	// (the api server may expose some resources under several api groups for backward compat...)
 	for preferred, obsolete := range preferredVersions {
 		if _, ok := resources[preferred]; ok {
 			delete(resources, obsolete)

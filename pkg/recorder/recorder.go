@@ -16,7 +16,7 @@ type activeFiles map[string]bool
 
 // Listener receive events from controllers and save them to disk as yaml files
 type Listener struct {
-	config      *config.KdnConfig
+	config      *config.KfConfig
 	evchan      chan controller.Event
 	actives     activeFiles
 	activesLock sync.RWMutex
@@ -25,7 +25,7 @@ type Listener struct {
 }
 
 // New creates a new Listener
-func New(config *config.KdnConfig, evchan chan controller.Event) *Listener {
+func New(config *config.KfConfig, evchan chan controller.Event) *Listener {
 	return &Listener{
 		config:  config,
 		evchan:  evchan,
