@@ -48,7 +48,8 @@ var (
 	RootCmd = &cobra.Command{
 		Use:   appName,
 		Short: "Backup Kubernetes cluster as yaml files",
-		Long:  "Backup Kubernetes cluster as yaml files in a git repository",
+		Long: "Backup Kubernetes cluster as yaml files in a git repository.\n" +
+			"The --exclude-kind and --exclude-object may be specified several times.",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conf := &config.KfConfig{
@@ -62,10 +63,12 @@ var (
 				HealthPort:    viper.GetInt("healthcheck-port"),
 				ResyncIntv:    time.Duration(viper.GetInt("resync-interval")) * time.Second,
 			}
+
 			err := conf.Init(viper.GetString("api-server"), viper.GetString("kube-config"))
 			if err != nil {
 				return fmt.Errorf("Failed to initialize the configuration: %v", err)
 			}
+
 			run.Run(conf)
 			return nil
 		},
@@ -117,16 +120,16 @@ func init() {
 	RootCmd.PersistentFlags().StringVarP(&gitURL, "git-url", "g", "", "Git repository URL")
 	bindPFlag("git-url", "git-url")
 
-	RootCmd.PersistentFlags().StringSliceVarP(&exclkind, "exclude-kind", "x", nil, "Ressource kind to exclude. Eg. 'deployment' (can be specified several times)")
+	RootCmd.PersistentFlags().StringSliceVarP(&exclkind, "exclude-kind", "x", nil, "Ressource kind to exclude. Eg. 'deployment'")
 	bindPFlag("exclude-kind", "exclude-kind")
 
-	RootCmd.PersistentFlags().StringSliceVarP(&exclobj, "exclude-object", "y", nil, "Object to exclude. Eg. 'configmap:kube-system/kube-dns' (can be specified several times)")
+	RootCmd.PersistentFlags().StringSliceVarP(&exclobj, "exclude-object", "y", nil, "Object to exclude. Eg. 'configmap:kube-system/kube-dns'")
 	bindPFlag("exclude-object", "exclude-object")
 
 	RootCmd.PersistentFlags().StringVarP(&filter, "filter", "l", "", "Label filter. Select only objects matching the label.")
 	bindPFlag("filter", "filter")
 
-	RootCmd.PersistentFlags().IntVarP(&healthP, "healthcheck-port", "p", 0, "Port for answering healthchecks")
+	RootCmd.PersistentFlags().IntVarP(&healthP, "healthcheck-port", "p", 0, "Port for answering healthchecks on /health url")
 	bindPFlag("healthcheck-port", "healthcheck-port")
 
 	RootCmd.PersistentFlags().IntVarP(&resync, "resync-interval", "i", 300, "Resync interval in seconds (0 to disable)")

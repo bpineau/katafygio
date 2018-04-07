@@ -39,15 +39,26 @@ You can also use the [docker image](https://hub.docker.com/r/bpineau/katafygio/)
 ## CLI options
 
 ```
+Backup Kubernetes cluster as yaml files in a git repository.
+The --exclude-kind and --exclude-object may be specified several times.
+
+Usage:
+  katafygio [flags]
+  katafygio [command]
+
+Available Commands:
+  help        Help about any command
+  version     Print the version number
+
 Flags:
   -s, --api-server string            Kubernetes api-server url
   -c, --config string                Configuration file (default "/etc/katafygio/katafygio.yaml")
   -d, --dry-run                      Dry-run mode: don't store anything.
-  -x, --exclude-kind stringSlice     Ressource kind to exclude. Eg. 'deployment' (can be specified several times)
-  -y, --exclude-object stringSlice   Object to exclude. Eg. 'configmap:kube-system/kube-dns' (can be specified several times)
+  -x, --exclude-kind stringSlice     Ressource kind to exclude. Eg. 'deployment'
+  -y, --exclude-object stringSlice   Object to exclude. Eg. 'configmap:kube-system/kube-dns'
   -l, --filter string                Label filter. Select only objects matching the label.
   -g, --git-url string               Git repository URL
-  -p, --healthcheck-port int         Port for answering healthchecks on /health
+  -p, --healthcheck-port int         Port for answering healthchecks on /health url
   -h, --help                         help for katafygio
   -k, --kube-config string           Kubernetes config path
   -e, --local-dir string             Where to dump yaml files (default "./kubernetes-backup")
@@ -66,6 +77,9 @@ prefixed by "KF", and with underscore instead of dashs. ie.:
 ```
 export KF_GIT_URL=https://user:token@github.com/myorg/myrepos.git
 export KF_LOCAL_DIR=/tmp/kfdump
+
+# exception: kube config path may be passed as such (for kubectl compatibility)
+export KUBECONFIG=/tmp/kconfig
 ```
 
 ## Build
