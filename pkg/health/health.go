@@ -46,7 +46,10 @@ func (h *Listener) Start() (*Listener, error) {
 
 	go func() {
 		defer close(h.donech)
-		_ = h.srv.ListenAndServe()
+		err := h.srv.ListenAndServe()
+		if err != nil && err.Error() != "http: Server closed" {
+			h.config.Logger.Errorf("healthcheck server failed: %v", err)
+		}
 	}()
 
 	return h, nil
