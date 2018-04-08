@@ -16,6 +16,7 @@ lint:
 		--enable=structcheck \
 		--enable=deadcode \
 		--enable=ineffassign \
+		--enable=dupl \
 		--enable=gotype \
 		--enable=varcheck \
 		--enable=interfacer \

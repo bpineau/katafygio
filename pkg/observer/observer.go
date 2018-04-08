@@ -1,9 +1,8 @@
-package controller
-
-// An observer polls the Kubernetes api-server to discover all supported
+// Package observer polls the Kubernetes api-server to discover all supported
 // API groups/object kinds, and launch a new controller for each of them.
 // Due to CRD/TPR, new API groups / object kinds may appear at any time,
 // that's why we keep polling the API server.
+package observer
 
 import (
 	"fmt"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/bpineau/katafygio/config"
+	"github.com/bpineau/katafygio/pkg/controller"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,10 +27,10 @@ const discoveryInterval = 60 * time.Second
 type Observer struct {
 	stop   chan struct{}
 	done   chan struct{}
-	evch   chan Event
+	evch   chan controller.Event
 	disc   *discovery.DiscoveryClient
 	cpool  dynamic.ClientPool
-	ctrls  map[string]*Controller
+	ctrls  map[string]*controller.Controller
 	config *config.KfConfig
 }
 
@@ -44,15 +44,15 @@ type gvk struct {
 
 type resources map[string]*gvk
 
-// NewObserver returns a new observer, that will watch for api resource kinds
+// New returns a new observer, that will watch for api resource kinds
 // and create new controllers for each one.
-func NewObserver(config *config.KfConfig, evch chan Event) *Observer {
+func New(config *config.KfConfig, evch chan controller.Event) *Observer {
 	return &Observer{
 		config: config,
 		evch:   evch,
 		disc:   discovery.NewDiscoveryClientForConfigOrDie(config.Client),
 		cpool:  dynamic.NewDynamicClientPool(config.Client),
-		ctrls:  make(map[string]*Controller),
+		ctrls:  make(map[string]*controller.Controller),
 	}
 }
 
@@ -126,7 +126,7 @@ func (c *Observer) refresh() error {
 			},
 		}
 
-		c.ctrls[name] = NewController(lw, c.evch, strings.ToLower(res.ar.Kind), c.config)
+		c.ctrls[name] = controller.New(lw, c.evch, strings.ToLower(res.ar.Kind), c.config)
 		go c.ctrls[name].Start()
 	}
 
@@ -146,9 +146,13 @@ func (c *Observer) expandAndFilterAPIResources(groups []*metav1.APIResourceList)
 	resources := make(map[string]*gvk)
 
 	for _, group := range groups {
-		gv, _ := schema.ParseGroupVersion(group.GroupVersion)
-		for _, ar := range group.APIResources {
+		gv, err := schema.ParseGroupVersion(group.GroupVersion)
+		if err != nil {
+			c.config.Logger.Errorf("api-server sent an unparsable group version: %v", err)
+			continue
+		}
 
+		for _, ar := range group.APIResources {
 			// remove subresources (like job/status or deployments/scale)
 			if strings.ContainsRune(ar.Name, '/') {
 				continue
