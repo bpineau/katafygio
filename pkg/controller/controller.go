@@ -12,9 +12,12 @@ import (
 	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/event"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
@@ -34,9 +37,18 @@ type Controller struct {
 	informer cache.SharedIndexInformer
 }
 
-// New return an untyped, generic Kubernetes controller
-func New(lw cache.ListerWatcher, notifier *event.Notifier, name string, config *config.KfConfig) *Controller {
-	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+// New return a kubernetes controller using the provided client
+func New(client cache.ListerWatcher, notifier *event.Notifier, name string, config *config.KfConfig) *Controller {
+
+	selector := metav1.ListOptions{LabelSelector: config.Filter}
+	lw := &cache.ListWatch{
+		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+			return client.List(selector)
+		},
+		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+			return client.Watch(selector)
+		},
+	}
 
 	informer := cache.NewSharedIndexInformer(
 		lw,
@@ -44,6 +56,8 @@ func New(lw cache.ListerWatcher, notifier *event.Notifier, name string, config *
 		config.ResyncIntv,
 		cache.Indexers{},
 	)
+
+	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
