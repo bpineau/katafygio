@@ -10,6 +10,7 @@ import (
 	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/controller"
 	"github.com/bpineau/katafygio/pkg/health"
+	"github.com/bpineau/katafygio/pkg/observer"
 	"github.com/bpineau/katafygio/pkg/recorder"
 	"github.com/bpineau/katafygio/pkg/store/git"
 )
@@ -24,7 +25,7 @@ func Run(config *config.KfConfig) {
 	evchan := make(chan controller.Event)
 
 	reco := recorder.New(config, evchan).Start()
-	ctrl := controller.NewObserver(config, evchan).Start()
+	ctrl := observer.New(config, evchan).Start()
 
 	http, err := health.New(config).Start()
 	if err != nil {

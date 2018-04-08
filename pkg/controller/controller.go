@@ -52,8 +52,8 @@ type Controller struct {
 	informer cache.SharedIndexInformer
 }
 
-// NewController return an untyped, generic Kubernetes controller
-func NewController(lw cache.ListerWatcher, evchan chan Event, name string, config *config.KfConfig) *Controller {
+// New return an untyped, generic Kubernetes controller
+func New(lw cache.ListerWatcher, evchan chan Event, name string, config *config.KfConfig) *Controller {
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 
 	informer := cache.NewSharedIndexInformer(
