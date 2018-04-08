@@ -1,3 +1,5 @@
+// Package recorder listen for events notification from controllers,
+// and persists those events' content as files on disk.
 package recorder
 
 import (
@@ -12,6 +14,9 @@ import (
 	"github.com/bpineau/katafygio/pkg/controller"
 )
 
+// activeFiles will contain a list of active (present in cluster) objets; we'll
+// use that to periodically find and garbage collect stale objets in the git repos
+// (ie. if some objects were delete from cluster while katafygio was not running).
 type activeFiles map[string]bool
 
 // Listener receive events from controllers and save them to disk as yaml files
@@ -33,7 +38,7 @@ func New(config *config.KfConfig, evchan chan controller.Event) *Listener {
 	}
 }
 
-// Start receive events and persists them to disk as files
+// Start receive events and saves them to disk as files
 func (w *Listener) Start() *Listener {
 	w.config.Logger.Info("Starting event recorder")
 	err := os.MkdirAll(filepath.Clean(w.config.LocalDir), 0700)

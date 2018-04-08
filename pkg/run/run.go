@@ -1,5 +1,5 @@
-// Package run implements the main katafygio's loop, by
-// the services and controllers.
+// Package run implements the main katafygio's loop, starting and
+// stopping all services and controllers.
 package run
 
 import (

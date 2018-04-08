@@ -1,8 +1,12 @@
-// I'd love a working pure Go implementation. I can't find any though, src-d/go-git
-// being innapropriate due to https://github.com/src-d/go-git/issues/793 and
-// https://github.com/src-d/go-git/issues/785 .
+// We'd love a working pure Go implementation. But so far we didn't find any
+// that would work for us. src-d/go-git is innapropriate due to
+// https://github.com/src-d/go-git/issues/793 and
+// https://github.com/src-d/go-git/issues/785 . And binding to the libgit C lib
+// aren't pure Go either. So we need the git binary for now.
 
-// Package git stores changes a in a git repository
+// Package git makes a git repository out of a local directory, keeps the
+// content committed when the directory changes, and optionaly (if a remote
+// repos url is provided), keep it in sync with a remote repository.
 package git
 
 import (
@@ -34,13 +38,13 @@ type Store struct {
 	donech   chan struct{}
 }
 
-// New instantiate a new Store
+// New instantiate a new git Store
 func New(config *config.KfConfig) *Store {
 	return &Store{
 		Logger:   config.Logger,
 		URL:      config.GitURL,
 		LocalDir: config.LocalDir,
-		Author:   "Katafygio", // XXX maybe this could be a cli option
+		Author:   "Katafygio", // XXX should we expose a cli option for that?
 		Email:    "katafygio@localhost",
 		Msg:      "Kubernetes cluster change",
 		DryRun:   config.DryRun,
