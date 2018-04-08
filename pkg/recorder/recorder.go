@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/bpineau/katafygio/config"
-	"github.com/bpineau/katafygio/pkg/controller"
+	"github.com/bpineau/katafygio/pkg/event"
 )
 
 // activeFiles will contain a list of active (present in cluster) objets; we'll
@@ -22,7 +22,7 @@ type activeFiles map[string]bool
 // Listener receive events from controllers and save them to disk as yaml files
 type Listener struct {
 	config      *config.KfConfig
-	evchan      chan controller.Event
+	events      *event.Notifier
 	actives     activeFiles
 	activesLock sync.RWMutex
 	stopch      chan struct{}
@@ -30,10 +30,10 @@ type Listener struct {
 }
 
 // New creates a new Listener
-func New(config *config.KfConfig, evchan chan controller.Event) *Listener {
+func New(config *config.KfConfig, events *event.Notifier) *Listener {
 	return &Listener{
 		config:  config,
-		evchan:  evchan,
+		events:  events,
 		actives: activeFiles{},
 	}
 }
@@ -57,8 +57,8 @@ func (w *Listener) Start() *Listener {
 			select {
 			case <-w.stopch:
 				return
-			case ev := <-w.evchan:
-				w.processNextEvent(ev)
+			case ev := <-w.events.C:
+				w.processNextEvent(&ev)
 			case <-gcTick.C:
 				w.deleteObsoleteFiles()
 			}
@@ -75,7 +75,7 @@ func (w *Listener) Stop() {
 	<-w.donech
 }
 
-func (w *Listener) processNextEvent(ev controller.Event) {
+func (w *Listener) processNextEvent(ev *event.Notification) {
 	if w.shouldIgnore(ev) {
 		return
 	}
@@ -88,9 +88,9 @@ func (w *Listener) processNextEvent(ev controller.Event) {
 	}
 
 	switch ev.Action {
-	case controller.Upsert:
-		err = w.save(path, ev.Obj)
-	case controller.Delete:
+	case event.Upsert:
+		err = w.save(path, ev.Object)
+	case event.Delete:
 		err = w.remove(path)
 	}
 
@@ -99,7 +99,7 @@ func (w *Listener) processNextEvent(ev controller.Event) {
 	}
 }
 
-func (w *Listener) shouldIgnore(ev controller.Event) bool {
+func (w *Listener) shouldIgnore(ev *event.Notification) bool {
 	for _, kind := range w.config.ExcludeKind {
 		if strings.Compare(strings.ToLower(kind), ev.Kind) == 0 {
 			return true
@@ -115,7 +115,7 @@ func (w *Listener) shouldIgnore(ev controller.Event) bool {
 	return w.config.DryRun
 }
 
-func getPath(root string, ev controller.Event) (string, error) {
+func getPath(root string, ev *event.Notification) (string, error) {
 	filename := ev.Kind + "-" + filepath.Base(ev.Key) + ".yaml"
 
 	dir, err := filepath.Abs(filepath.Dir(root + "/" + ev.Key))
