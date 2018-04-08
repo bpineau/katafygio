@@ -1,3 +1,8 @@
+// Package controller list and keep watching a specific Kubernetes resource kind
+// (ie. "apps/v1 Deployment", "v1 Namespace", etc) and notifies a recorder whenever
+// a change happens (an object changed, was created, or deleted). This is a generic
+// implementation: the resource kind to watch is provided at runtime. We should
+// start several such controllers to watch for distinct resources.
 package controller
 
 import (
@@ -159,7 +164,7 @@ func (c *Controller) processItem(key string) error {
 
 	obj := rawobj.(*unstructured.Unstructured).DeepCopy()
 
-	// clean non exportable fields
+	// clear irrelevant attributes
 	uc := obj.UnstructuredContent()
 	md := uc["metadata"].(map[string]interface{})
 	delete(uc, "status")

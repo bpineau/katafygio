@@ -1,4 +1,4 @@
-// Package health serves healthchecks over HTTP at /health endpoint.
+// Package health serves health checks over HTTP at /health endpoint.
 package health
 
 import (

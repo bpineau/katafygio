@@ -10,9 +10,9 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// KfConfig is the configuration struct, passed to controllers's Init()
+// KfConfig holds the configuration options passed at launch time (and the rest client)
 type KfConfig struct {
-	// When DryRun is true, we display but don't really send notifications
+	// When DryRun is true, we don't write to disk and we don't commit/push
 	DryRun bool
 
 	// Logger should be used to send all logs
@@ -21,7 +21,7 @@ type KfConfig struct {
 	// Client represents a connection to a Kubernetes cluster
 	Client *rest.Config
 
-	// GitURL is the address of the git repository
+	// GitURL is the address of a remote git repository
 	GitURL string
 
 	// LocalDir is the local path where we'll serialize cluster objets

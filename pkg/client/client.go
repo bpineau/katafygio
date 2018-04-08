@@ -1,4 +1,4 @@
-// Package client  initialize a Kubernete's client-go rest.Config or clientset
+// Package client initialize a Kubernete's client-go rest.Config or clientset
 package client
 
 import (
@@ -14,9 +14,9 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
-// NewRestConfig create a *rest.Config, using the kubectl paths and priorities:
-// - Command line flags (api-server and/or kubeconfig path) have higher priorities
-// - Else, use the config file path in KUBECONFIG environment variable, if any
+// NewRestConfig create a *rest.Config, trying to mimic kubectl behavior:
+// - Explicit user provided api-server (and/or kubeconfig path) have higher priorities
+// - Else, use the config file path in KUBECONFIG environment variable (if any)
 // - Else, use the config file in ~/.kube/config, if any
 // - Else, consider we're running in cluster (in a pod), and use the pod's service
 //   account and cluster's kubernetes.default service.
@@ -45,8 +45,6 @@ func NewRestConfig(apiserver string, kubeconfig string) (*rest.Config, error) {
 }
 
 // NewClientSet create a clientset (a client connection to a Kubernetes cluster).
-// It will connect using the optional apiserver or kubeconfig options, or will
-// default to the automatic, in cluster settings.
 func NewClientSet(apiserver string, kubeconfig string) (*kubernetes.Clientset, error) {
 	config, err := NewRestConfig(apiserver, kubeconfig)
 	if err != nil {

@@ -1,5 +1,10 @@
 package controller
 
+// An observer polls the Kubernetes api-server to discover all supported
+// API groups/object kinds, and launch a new controller for each of them.
+// Due to CRD/TPR, new API groups / object kinds may appear at any time,
+// that's why we keep polling the API server.
+
 import (
 	"fmt"
 	"strings"
@@ -18,7 +23,7 @@ import (
 
 const discoveryInterval = 60 * time.Second
 
-// Observer manage kubernetes controllers
+// Observer watch api-server and manage kubernetes controllers
 type Observer struct {
 	stop   chan struct{}
 	done   chan struct{}
@@ -39,7 +44,8 @@ type gvk struct {
 
 type resources map[string]*gvk
 
-// NewObserver creates a new observer, to create an manage Kubernetes controllers
+// NewObserver returns a new observer, that will watch for api resource kinds
+// and create new controllers for each one.
 func NewObserver(config *config.KfConfig, evch chan Event) *Observer {
 	return &Observer{
 		config: config,
@@ -164,7 +170,7 @@ func (c *Observer) expandAndFilterAPIResources(groups []*metav1.APIResourceList)
 	}
 
 	// remove lower priorities "cohabitations". cf. kubernetes/cmd/kube-apiserver/app/server.go
-	// (the api server may expose some resources under several api groups for backward compat...)
+	// (the api-server may expose a resource under several api groups, for backward compat)
 	for preferred, obsolete := range preferredVersions {
 		if _, ok := resources[preferred]; ok {
 			delete(resources, obsolete)
