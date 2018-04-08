@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/bpineau/katafygio/config"
+	"github.com/bpineau/katafygio/pkg/event"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -22,38 +23,19 @@ import (
 
 const maxProcessRetry = 6
 
-// Action represents the kind of object change we're notifying
-type Action int
-
-const (
-	// Delete is the object deletion Action
-	Delete Action = iota
-
-	// Upsert is the update or create Action
-	Upsert
-)
-
-// Event conveys an object delete/upsert notification
-type Event struct {
-	Action Action
-	Key    string
-	Kind   string
-	Obj    string
-}
-
 // Controller is a generic kubernetes controller
 type Controller struct {
 	stopCh   chan struct{}
 	doneCh   chan struct{}
-	evchan   chan Event
-	name     string
+	notifier *event.Notifier
 	config   *config.KfConfig
+	name     string
 	queue    workqueue.RateLimitingInterface
 	informer cache.SharedIndexInformer
 }
 
 // New return an untyped, generic Kubernetes controller
-func New(lw cache.ListerWatcher, evchan chan Event, name string, config *config.KfConfig) *Controller {
+func New(lw cache.ListerWatcher, notifier *event.Notifier, name string, config *config.KfConfig) *Controller {
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 
 	informer := cache.NewSharedIndexInformer(
@@ -87,7 +69,7 @@ func New(lw cache.ListerWatcher, evchan chan Event, name string, config *config.
 	return &Controller{
 		stopCh:   make(chan struct{}),
 		doneCh:   make(chan struct{}),
-		evchan:   evchan,
+		notifier: notifier,
 		name:     name,
 		config:   config,
 		queue:    queue,
@@ -158,7 +140,7 @@ func (c *Controller) processItem(key string) error {
 
 	if !exists {
 		// deleted object
-		c.enqueue(Event{Action: Delete, Key: key, Kind: c.name, Obj: ""})
+		c.enqueue(&event.Notification{Action: event.Delete, Key: key, Kind: c.name, Object: ""})
 		return nil
 	}
 
@@ -180,10 +162,10 @@ func (c *Controller) processItem(key string) error {
 		return fmt.Errorf("failed to marshal %s: %v", key, err)
 	}
 
-	c.enqueue(Event{Action: Upsert, Key: key, Kind: c.name, Obj: string(yml)})
+	c.enqueue(&event.Notification{Action: event.Upsert, Key: key, Kind: c.name, Object: string(yml)})
 	return nil
 }
 
-func (c *Controller) enqueue(ev Event) {
-	c.evchan <- ev
+func (c *Controller) enqueue(notif *event.Notification) {
+	c.notifier.Send(notif)
 }

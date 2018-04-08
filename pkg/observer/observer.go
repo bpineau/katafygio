@@ -11,6 +11,7 @@ import (
 
 	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/controller"
+	"github.com/bpineau/katafygio/pkg/event"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,7 +28,7 @@ const discoveryInterval = 60 * time.Second
 type Observer struct {
 	stop   chan struct{}
 	done   chan struct{}
-	evch   chan controller.Event
+	notif  *event.Notifier
 	disc   *discovery.DiscoveryClient
 	cpool  dynamic.ClientPool
 	ctrls  map[string]*controller.Controller
@@ -46,10 +47,10 @@ type resources map[string]*gvk
 
 // New returns a new observer, that will watch for api resource kinds
 // and create new controllers for each one.
-func New(config *config.KfConfig, evch chan controller.Event) *Observer {
+func New(config *config.KfConfig, notif *event.Notifier) *Observer {
 	return &Observer{
 		config: config,
-		evch:   evch,
+		notif:  notif,
 		disc:   discovery.NewDiscoveryClientForConfigOrDie(config.Client),
 		cpool:  dynamic.NewDynamicClientPool(config.Client),
 		ctrls:  make(map[string]*controller.Controller),
@@ -126,7 +127,7 @@ func (c *Observer) refresh() error {
 			},
 		}
 
-		c.ctrls[name] = controller.New(lw, c.evch, strings.ToLower(res.ar.Kind), c.config)
+		c.ctrls[name] = controller.New(lw, c.notif, strings.ToLower(res.ar.Kind), c.config)
 		go c.ctrls[name].Start()
 	}
 
