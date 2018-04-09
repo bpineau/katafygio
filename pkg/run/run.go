@@ -24,7 +24,7 @@ func Run(config *config.KfConfig) {
 
 	evts := event.New()
 	reco := recorder.New(config, evts).Start()
-	ctrl := observer.New(config, evts).Start()
+	obsv := observer.New(config, evts).Start()
 
 	http, err := health.New(config).Start()
 	if err != nil {
@@ -36,7 +36,7 @@ func Run(config *config.KfConfig) {
 	signal.Notify(sigterm, syscall.SIGINT)
 	<-sigterm
 
-	ctrl.Stop()
+	obsv.Stop()
 	repo.Stop()
 	reco.Stop()
 	http.Stop()

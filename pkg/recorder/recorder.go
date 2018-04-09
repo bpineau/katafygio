@@ -22,7 +22,7 @@ type activeFiles map[string]bool
 // Listener receive events from controllers and save them to disk as yaml files
 type Listener struct {
 	config      *config.KfConfig
-	events      *event.Notifier
+	events      event.Notifier
 	actives     activeFiles
 	activesLock sync.RWMutex
 	stopch      chan struct{}
@@ -30,7 +30,7 @@ type Listener struct {
 }
 
 // New creates a new Listener
-func New(config *config.KfConfig, events *event.Notifier) *Listener {
+func New(config *config.KfConfig, events event.Notifier) *Listener {
 	return &Listener{
 		config:  config,
 		events:  events,
@@ -47,6 +47,7 @@ func (w *Listener) Start() *Listener {
 	}
 
 	go func() {
+		evCh := w.events.ReadChan()
 		gcTick := time.NewTicker(w.config.ResyncIntv * 2)
 		w.stopch = make(chan struct{})
 		w.donech = make(chan struct{})
@@ -57,7 +58,7 @@ func (w *Listener) Start() *Listener {
 			select {
 			case <-w.stopch:
 				return
-			case ev := <-w.events.C:
+			case ev := <-evCh:
 				w.processNextEvent(&ev)
 			case <-gcTick.C:
 				w.deleteObsoleteFiles()

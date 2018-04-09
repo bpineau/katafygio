@@ -25,8 +25,8 @@ const discoveryInterval = 60 * time.Second
 type Observer struct {
 	stop   chan struct{}
 	done   chan struct{}
-	notif  *event.Notifier
-	disc   *discovery.DiscoveryClient
+	notif  event.Notifier
+	disc   discovery.DiscoveryInterface
 	cpool  dynamic.ClientPool
 	ctrls  map[string]*controller.Controller
 	config *config.KfConfig
@@ -40,7 +40,7 @@ type gvk struct {
 type resources map[string]*gvk
 
 // New returns a new observer, that will watch API resources and create controllers
-func New(config *config.KfConfig, notif *event.Notifier) *Observer {
+func New(config *config.KfConfig, notif event.Notifier) *Observer {
 	return &Observer{
 		config: config,
 		notif:  notif,

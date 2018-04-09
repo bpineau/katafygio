@@ -21,18 +21,29 @@ type Notification struct {
 }
 
 // Notifier mediates notifications between controllers and recorder
-type Notifier struct {
-	C chan Notification
+type Notifier interface {
+	Send(notif *Notification)
+	ReadChan() <-chan Notification
 }
 
-// New creates a new event.Notifier
-func New() *Notifier {
-	return &Notifier{
-		C: make(chan Notification),
+// Unbuffered implements Notifier
+type Unbuffered struct {
+	c chan Notification
+}
+
+// New creates an Unbuffered
+func New() *Unbuffered {
+	return &Unbuffered{
+		c: make(chan Notification),
 	}
 }
 
 // Send sends a notification
-func (n *Notifier) Send(notif *Notification) {
-	n.C <- *notif
+func (n *Unbuffered) Send(notif *Notification) {
+	n.c <- *notif
+}
+
+// ReadChan returns a channel to read Notifications from
+func (n *Unbuffered) ReadChan() <-chan Notification {
+	return n.c
 }
