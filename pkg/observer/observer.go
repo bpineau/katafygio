@@ -7,6 +7,7 @@ package observer
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bpineau/katafygio/config"
@@ -32,14 +33,15 @@ type controllerCollection map[string]controller.Interface
 
 // Observer watch api-server and manage kubernetes controllers lifecyles
 type Observer struct {
-	config    *config.KfConfig
-	stopCh    chan struct{}
-	doneCh    chan struct{}
-	notifier  event.Notifier
-	discovery discovery.DiscoveryInterface
-	cpool     dynamic.ClientPool
-	ctrls     controllerCollection
-	factory   ControllerFactory
+	sync.RWMutex // protect ctrls
+	config       *config.KfConfig
+	stopCh       chan struct{}
+	doneCh       chan struct{}
+	notifier     event.Notifier
+	discovery    discovery.DiscoveryInterface
+	cpool        dynamic.ClientPool
+	ctrls        controllerCollection
+	factory      ControllerFactory
 }
 
 type gvk struct {
@@ -94,16 +96,21 @@ func (c *Observer) Start() *Observer {
 func (c *Observer) Stop() {
 	c.config.Logger.Info("Stopping all kubernetes controllers")
 
-	close(c.stopCh)
+	c.stopCh <- struct{}{}
 
+	c.RLock()
 	for _, ct := range c.ctrls {
 		ct.Stop()
 	}
+	c.RUnlock()
 
 	<-c.doneCh
 }
 
 func (c *Observer) refresh() error {
+	c.Lock()
+	defer c.Unlock()
+
 	groups, err := c.discovery.ServerResources()
 	if err != nil {
 		return fmt.Errorf("failed to collect server resources: %v", err)
