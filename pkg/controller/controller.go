@@ -26,13 +26,22 @@ import (
 
 const maxProcessRetry = 6
 
+// Interface describe a standard kubernetes controller
+type Interface interface {
+	Start()
+	Stop()
+}
+
+// Factory generate controllers
+type Factory struct{}
+
 // Controller is a generic kubernetes controller
 type Controller struct {
+	name     string
 	stopCh   chan struct{}
 	doneCh   chan struct{}
 	notifier event.Notifier
 	config   *config.KfConfig
-	name     string
 	queue    workqueue.RateLimitingInterface
 	informer cache.SharedIndexInformer
 }
@@ -99,7 +108,7 @@ func (c *Controller) Start() {
 	go c.informer.Run(c.stopCh)
 
 	if !cache.WaitForCacheSync(c.stopCh, c.informer.HasSynced) {
-		utilruntime.HandleError(fmt.Errorf("Timed out waiting for caches to sync"))
+		utilruntime.HandleError(fmt.Errorf("Timed out waiting for cache sync"))
 		return
 	}
 
@@ -149,7 +158,7 @@ func (c *Controller) processItem(key string) error {
 	rawobj, exists, err := c.informer.GetIndexer().GetByKey(key)
 
 	if err != nil {
-		return fmt.Errorf("error fetching object with key %s from store: %v", key, err)
+		return fmt.Errorf("error fetching %s from store: %v", key, err)
 	}
 
 	if !exists {
@@ -182,4 +191,9 @@ func (c *Controller) processItem(key string) error {
 
 func (c *Controller) enqueue(notif *event.Notification) {
 	c.notifier.Send(notif)
+}
+
+// NewController create a controller.Controller
+func (f *Factory) NewController(client cache.ListerWatcher, notifier event.Notifier, name string, config *config.KfConfig) Interface {
+	return New(client, notifier, name, config)
 }
