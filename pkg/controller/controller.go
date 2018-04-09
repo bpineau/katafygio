@@ -30,7 +30,7 @@ const maxProcessRetry = 6
 type Controller struct {
 	stopCh   chan struct{}
 	doneCh   chan struct{}
-	notifier *event.Notifier
+	notifier event.Notifier
 	config   *config.KfConfig
 	name     string
 	queue    workqueue.RateLimitingInterface
@@ -38,7 +38,7 @@ type Controller struct {
 }
 
 // New return a kubernetes controller using the provided client
-func New(client cache.ListerWatcher, notifier *event.Notifier, name string, config *config.KfConfig) *Controller {
+func New(client cache.ListerWatcher, notifier event.Notifier, name string, config *config.KfConfig) *Controller {
 
 	selector := metav1.ListOptions{LabelSelector: config.Filter}
 	lw := &cache.ListWatch{
