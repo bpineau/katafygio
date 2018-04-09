@@ -17,19 +17,29 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/tools/cache"
 )
 
 const discoveryInterval = 60 * time.Second
 
-// Observer watch api-server and manage kubernetes controllers
+// ControllerFactory make controllers generation interchangeable
+type ControllerFactory interface {
+	NewController(client cache.ListerWatcher, notifier event.Notifier,
+		name string, config *config.KfConfig) controller.Interface
+}
+
+type controllerCollection map[string]controller.Interface
+
+// Observer watch api-server and manage kubernetes controllers lifecyles
 type Observer struct {
-	stop   chan struct{}
-	done   chan struct{}
-	notif  event.Notifier
-	disc   discovery.DiscoveryInterface
-	cpool  dynamic.ClientPool
-	ctrls  map[string]*controller.Controller
-	config *config.KfConfig
+	config    *config.KfConfig
+	stopCh    chan struct{}
+	doneCh    chan struct{}
+	notifier  event.Notifier
+	discovery discovery.DiscoveryInterface
+	cpool     dynamic.ClientPool
+	ctrls     controllerCollection
+	factory   ControllerFactory
 }
 
 type gvk struct {
@@ -40,13 +50,14 @@ type gvk struct {
 type resources map[string]*gvk
 
 // New returns a new observer, that will watch API resources and create controllers
-func New(config *config.KfConfig, notif event.Notifier) *Observer {
+func New(config *config.KfConfig, notif event.Notifier, factory ControllerFactory) *Observer {
 	return &Observer{
-		config: config,
-		notif:  notif,
-		disc:   discovery.NewDiscoveryClientForConfigOrDie(config.Client),
-		cpool:  dynamic.NewDynamicClientPool(config.Client),
-		ctrls:  make(map[string]*controller.Controller),
+		config:    config,
+		notifier:  notif,
+		discovery: discovery.NewDiscoveryClientForConfigOrDie(config.Client),
+		cpool:     dynamic.NewDynamicClientPool(config.Client),
+		ctrls:     make(controllerCollection),
+		factory:   factory,
 	}
 }
 
@@ -54,13 +65,13 @@ func New(config *config.KfConfig, notif event.Notifier) *Observer {
 func (c *Observer) Start() *Observer {
 	c.config.Logger.Info("Starting all kubernetes controllers")
 
-	c.stop = make(chan struct{})
-	c.done = make(chan struct{})
+	c.stopCh = make(chan struct{})
+	c.doneCh = make(chan struct{})
 
 	go func() {
 		ticker := time.NewTicker(discoveryInterval)
 		defer ticker.Stop()
-		defer close(c.done)
+		defer close(c.doneCh)
 
 		for {
 			err := c.refresh()
@@ -69,7 +80,7 @@ func (c *Observer) Start() *Observer {
 			}
 
 			select {
-			case <-c.stop:
+			case <-c.stopCh:
 				return
 			case <-ticker.C:
 			}
@@ -83,17 +94,17 @@ func (c *Observer) Start() *Observer {
 func (c *Observer) Stop() {
 	c.config.Logger.Info("Stopping all kubernetes controllers")
 
-	close(c.stop)
+	close(c.stopCh)
 
 	for _, ct := range c.ctrls {
 		ct.Stop()
 	}
 
-	<-c.done
+	<-c.doneCh
 }
 
 func (c *Observer) refresh() error {
-	groups, err := c.disc.ServerResources()
+	groups, err := c.discovery.ServerResources()
 	if err != nil {
 		return fmt.Errorf("failed to collect server resources: %v", err)
 	}
@@ -114,7 +125,7 @@ func (c *Observer) refresh() error {
 
 		client := cl.Resource(res.apiResource.DeepCopy(), metav1.NamespaceAll)
 
-		c.ctrls[name] = controller.New(client, c.notif, cname, c.config)
+		c.ctrls[name] = c.factory.NewController(client, c.notifier, cname, c.config)
 		go c.ctrls[name].Start()
 	}
 

@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/bpineau/katafygio/config"
+	"github.com/bpineau/katafygio/pkg/controller"
 	"github.com/bpineau/katafygio/pkg/event"
 	"github.com/bpineau/katafygio/pkg/health"
 	"github.com/bpineau/katafygio/pkg/observer"
@@ -24,7 +25,7 @@ func Run(config *config.KfConfig) {
 
 	evts := event.New()
 	reco := recorder.New(config, evts).Start()
-	obsv := observer.New(config, evts).Start()
+	obsv := observer.New(config, evts, &controller.Factory{}).Start()
 
 	http, err := health.New(config).Start()
 	if err != nil {
