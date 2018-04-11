@@ -50,5 +50,6 @@ coverall:
 
 test:
 	go test -i github.com/bpineau/katafygio/...
+	go test -race -cover github.com/bpineau/katafygio/...
 
 .PHONY: tools lint fmt install clean coverall test all
