@@ -7,6 +7,7 @@ package controller
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/bpineau/katafygio/config"
@@ -159,6 +160,12 @@ func (c *Controller) processItem(key string) error {
 
 	if err != nil {
 		return fmt.Errorf("error fetching %s from store: %v", key, err)
+	}
+
+	for _, obj := range c.config.ExcludeObject {
+		if strings.Compare(strings.ToLower(obj), strings.ToLower(c.name+":"+key)) == 0 {
+			return nil
+		}
 	}
 
 	if !exists {
