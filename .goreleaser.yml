@@ -25,7 +25,7 @@ dockers:
   - image: bpineau/katafygio
     goos: linux
     goarch: amd64
-    dockerfile: Dockerfile.goreleaser
+    dockerfile: assets/Dockerfile.goreleaser
     tag_templates:
       - '{{ .Tag }}'
       - latest
