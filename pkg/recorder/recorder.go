@@ -77,12 +77,6 @@ func (w *Listener) Stop() {
 }
 
 func (w *Listener) processNextEvent(ev *event.Notification) {
-	if w.shouldIgnore(ev) {
-		return
-	}
-
-	w.config.Logger.Debugf("kind=%s name=%s", ev.Kind, ev.Key)
-
 	path, err := getPath(w.config.LocalDir, ev)
 	if err != nil {
 		w.config.Logger.Errorf("failed to get %s path: %v", ev.Key, err)
@@ -100,22 +94,6 @@ func (w *Listener) processNextEvent(ev *event.Notification) {
 	}
 }
 
-func (w *Listener) shouldIgnore(ev *event.Notification) bool {
-	for _, kind := range w.config.ExcludeKind {
-		if strings.Compare(strings.ToLower(kind), ev.Kind) == 0 {
-			return true
-		}
-	}
-
-	for _, obj := range w.config.ExcludeObject {
-		if strings.Compare(strings.ToLower(obj), ev.Kind+":"+ev.Key) == 0 {
-			return true
-		}
-	}
-
-	return w.config.DryRun
-}
-
 func getPath(root string, ev *event.Notification) (string, error) {
 	filename := ev.Kind + "-" + filepath.Base(ev.Key) + ".yaml"
 
@@ -128,6 +106,11 @@ func getPath(root string, ev *event.Notification) (string, error) {
 }
 
 func (w *Listener) remove(file string) error {
+	w.config.Logger.Debugf("Removing %s from disk", file)
+	if w.config.DryRun {
+		return nil
+	}
+
 	w.activesLock.Lock()
 	delete(w.actives, file)
 	w.activesLock.Unlock()
@@ -140,6 +123,12 @@ func (w *Listener) relativePath(file string) string {
 }
 
 func (w *Listener) save(file string, data string) error {
+	w.config.Logger.Debugf("Saving %s to disk", file)
+
+	if w.config.DryRun {
+		return nil
+	}
+
 	dir := filepath.Clean(filepath.Dir(file))
 
 	err := os.MkdirAll(dir, 0700)
