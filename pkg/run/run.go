@@ -26,11 +26,7 @@ func Run(config *config.KfConfig) {
 	evts := event.New()
 	reco := recorder.New(config, evts).Start()
 	obsv := observer.New(config, evts, &controller.Factory{}).Start()
-
-	http, err := health.New(config).Start()
-	if err != nil {
-		config.Logger.Fatalf("failed to start http healtcheck handler: %v", err)
-	}
+	http := health.New(config).Start()
 
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGTERM)
