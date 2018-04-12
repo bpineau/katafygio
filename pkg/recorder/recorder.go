@@ -10,9 +10,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spf13/afero"
+
 	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/event"
 )
+
+var appFs = afero.NewOsFs()
 
 // activeFiles will contain a list of active (present in cluster) objets; we'll
 // use that to periodically find and garbage collect stale objets in the git repos
@@ -41,7 +45,7 @@ func New(config *config.KfConfig, events event.Notifier) *Listener {
 // Start receive events and saves them to disk as files
 func (w *Listener) Start() *Listener {
 	w.config.Logger.Info("Starting event recorder")
-	err := os.MkdirAll(filepath.Clean(w.config.LocalDir), 0700)
+	err := appFs.MkdirAll(filepath.Clean(w.config.LocalDir), 0700)
 	if err != nil {
 		panic(fmt.Sprintf("Can't create directory %s: %v", w.config.LocalDir, err))
 	}
@@ -114,7 +118,7 @@ func (w *Listener) remove(file string) error {
 	w.activesLock.Lock()
 	delete(w.actives, file)
 	w.activesLock.Unlock()
-	return os.Remove(filepath.Clean(file))
+	return appFs.Remove(filepath.Clean(file))
 }
 
 func (w *Listener) relativePath(file string) string {
@@ -131,7 +135,7 @@ func (w *Listener) save(file string, data string) error {
 
 	dir := filepath.Clean(filepath.Dir(file))
 
-	err := os.MkdirAll(dir, 0700)
+	err := appFs.MkdirAll(dir, 0700)
 	if err != nil {
 		return fmt.Errorf("can't create local directory %s: %v", dir, err)
 	}
@@ -140,7 +144,7 @@ func (w *Listener) save(file string, data string) error {
 	w.actives[w.relativePath(file)] = true
 	w.activesLock.Unlock()
 
-	f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+	f, err := appFs.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return fmt.Errorf("failed to create %s on disk: %v", file, err)
 	}
@@ -163,7 +167,7 @@ func (w *Listener) deleteObsoleteFiles() {
 	defer w.activesLock.RUnlock()
 	root := filepath.Clean(w.config.LocalDir)
 
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	err := afero.Walk(appFs, root, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}
@@ -177,7 +181,12 @@ func (w *Listener) deleteObsoleteFiles() {
 			return nil
 		}
 
-		return os.Remove(filepath.Clean(path))
+		w.config.Logger.Debugf("Removing %s from disk", path)
+		if !w.config.DryRun {
+			return appFs.Remove(filepath.Clean(path))
+		}
+
+		return nil
 	})
 
 	if err != nil {
