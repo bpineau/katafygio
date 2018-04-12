@@ -33,9 +33,9 @@ func (h *Listener) healthCheckReply(w http.ResponseWriter, r *http.Request) {
 }
 
 // Start exposes an http healthcheck handler
-func (h *Listener) Start() (*Listener, error) {
+func (h *Listener) Start() *Listener {
 	if h.config.HealthPort == 0 {
-		return h, nil
+		return h
 	}
 
 	h.config.Logger.Info("Starting http healtcheck handler")
@@ -52,7 +52,7 @@ func (h *Listener) Start() (*Listener, error) {
 		}
 	}()
 
-	return h, nil
+	return h
 }
 
 // Stop halts the http health check handler
