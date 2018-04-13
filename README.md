@@ -1,6 +1,7 @@
 # katafygio
 
 [![Build Status](https://travis-ci.org/bpineau/katafygio.svg?branch=master)](https://travis-ci.org/bpineau/katafygio)
+[![Coverage Status](https://coveralls.io/repos/github/bpineau/katafygio/badge.svg?branch=master)](https://coveralls.io/github/bpineau/katafygio?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/bpineau/katafygio)](https://goreportcard.com/report/github.com/bpineau/katafygio)
 
 **katafygio** discovers Kubernetes objects (deployments, services, ...),
