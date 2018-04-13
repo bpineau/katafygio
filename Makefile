@@ -26,7 +26,6 @@ lint:
 		--enable=misspell \
 		--enable=gas \
 		--enable=goimports \
-		--enable=gocyclo \
 		./...
 
 fmt:

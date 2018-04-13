@@ -12,9 +12,10 @@ package git
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"time"
+
+	"github.com/spf13/afero"
 
 	"github.com/bpineau/katafygio/config"
 	"github.com/sirupsen/logrus"
@@ -24,6 +25,8 @@ const (
 	timeoutCommands = 60 * time.Second
 	checkInterval   = 10 * time.Second
 )
+
+var appFs = afero.NewOsFs()
 
 // Store will maintain a git repository off dumped kube objects
 type Store struct {
@@ -131,15 +134,13 @@ func (s *Store) Status() (changed bool, err error) {
 	return false, nil
 }
 
-// Clone does git clone, or git init (when there's no GiURL to clone from)
-func (s *Store) Clone() error {
-	if s.DryRun {
-		return nil
-	}
-
-	err := os.MkdirAll(s.LocalDir, 0700)
-	if err != nil {
-		return fmt.Errorf("failed to created %s: %v", s.LocalDir, err)
+// Clone does git clone, or git init (when there's no GitURL to clone from)
+func (s *Store) Clone() (err error) {
+	if !s.DryRun {
+		err = appFs.MkdirAll(s.LocalDir, 0700)
+		if err != nil {
+			return fmt.Errorf("failed to create %s: %v", s.LocalDir, err)
+		}
 	}
 
 	if s.URL == "" {
