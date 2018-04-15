@@ -21,7 +21,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
+var (
 	timeoutCommands = 60 * time.Second
 	checkInterval   = 10 * time.Second
 )
