@@ -25,7 +25,10 @@ import (
 	"github.com/ghodss/yaml"
 )
 
-const maxProcessRetry = 6
+var (
+	maxProcessRetry = 6
+	canaryKey       = "$katafygio-canary"
+)
 
 // Interface describe a standard kubernetes controller
 type Interface interface {
@@ -41,6 +44,7 @@ type Controller struct {
 	name     string
 	stopCh   chan struct{}
 	doneCh   chan struct{}
+	syncCh   chan struct{}
 	notifier event.Notifier
 	config   *config.KfConfig
 	queue    workqueue.RateLimitingInterface
@@ -93,6 +97,7 @@ func New(client cache.ListerWatcher, notifier event.Notifier, name string, confi
 	return &Controller{
 		stopCh:   make(chan struct{}),
 		doneCh:   make(chan struct{}),
+		syncCh:   make(chan struct{}, 1),
 		notifier: notifier,
 		name:     name,
 		config:   config,
@@ -113,15 +118,18 @@ func (c *Controller) Start() {
 		return
 	}
 
+	c.queue.Add(canaryKey)
+
 	go wait.Until(c.runWorker, time.Second, c.stopCh)
 }
 
 // Stop halts the controller
 func (c *Controller) Stop() {
+	c.config.Logger.Infof("Stopping %s controller", c.name)
+	<-c.syncCh
 	close(c.stopCh)
 	c.queue.ShutDown()
 	<-c.doneCh
-	c.config.Logger.Infof("Stopping %s controller", c.name)
 }
 
 func (c *Controller) runWorker() {
@@ -137,6 +145,13 @@ func (c *Controller) processNextItem() bool {
 		return false
 	}
 	defer c.queue.Done(key)
+
+	if strings.Compare(key.(string), canaryKey) == 0 {
+		c.config.Logger.Infof("Initial sync completed for %s controller", c.name)
+		c.syncCh <- struct{}{}
+		c.queue.Forget(key)
+		return true
+	}
 
 	err := c.processItem(key.(string))
 
