@@ -31,7 +31,9 @@ func Run(config *config.KfConfig) {
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGTERM)
 	signal.Notify(sigterm, syscall.SIGINT)
-	<-sigterm
+	if !config.DumpMode {
+		<-sigterm
+	}
 
 	obsv.Stop()
 	repo.Stop()

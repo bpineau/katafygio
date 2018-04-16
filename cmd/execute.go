@@ -25,6 +25,7 @@ var (
 	apiServer string
 	kubeConf  string
 	dryRun    bool
+	dumpMode  bool
 	logLevel  string
 	logOutput string
 	logServer string
@@ -54,6 +55,7 @@ var (
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conf := &config.KfConfig{
 				DryRun:        viper.GetBool("dry-run"),
+				DumpMode:      viper.GetBool("dump-only"),
 				Logger:        klog.New(viper.GetString("log.level"), viper.GetString("log.server"), viper.GetString("log.output")),
 				LocalDir:      viper.GetString("local-dir"),
 				GitURL:        viper.GetString("git-url"),
@@ -104,6 +106,9 @@ func init() {
 
 	RootCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "Dry-run mode: don't store anything.")
 	bindPFlag("dry-run", "dry-run")
+
+	RootCmd.PersistentFlags().BoolVarP(&dumpMode, "dump-only", "m", false, "Dump mode: dump everything and exit")
+	bindPFlag("dump-only", "dump-only")
 
 	RootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "v", "info", "Log level")
 	bindPFlag("log.level", "log-level")

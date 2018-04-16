@@ -15,6 +15,9 @@ type KfConfig struct {
 	// When DryRun is true, we don't write to disk and we don't commit/push
 	DryRun bool
 
+	// When DumpMode is true, we just dump everything once and exit
+	DumpMode bool
+
 	// Logger should be used to send all logs
 	Logger *logrus.Logger
 
