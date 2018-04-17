@@ -10,23 +10,23 @@ This provides real time, continuous backups, and keeps detailled changes history
 
 ## Usage
 
-Just dump the cluster's content and exit:
+To dump the cluster content once and exit:
 ```bash
 katafygio --dump-only --local-dir /tmp/clusterdump/
 ```
 
-Create a local git repository in /tmp/kfdump and continuously save the cluster content:
+To create a local git repository and continuously save the cluster content:
 ```bash
 katafygio --local-dir /tmp/kfdump
 ```
 
-Same, but also continously push the local repository to a remote:
+Same, but also continuously push to a remote repository:
 ```bash
 katafygio --git-url https://user:token@github.com/myorg/myrepos.git --local-dir /tmp/kfdump
 ```
 
 Filtering out irrelevant objects (esp. ReplicaSets and Pods) with `-x` or `-y`
-will help to keep resources usage low and git history concise.
+will help to keep resources usage low, and a concise git history. Eg.:
 
 
 ```bash
@@ -47,7 +47,7 @@ You can also use the [docker image](https://hub.docker.com/r/bpineau/katafygio/)
 
 ```
 Backup Kubernetes cluster as yaml files in a git repository.
-The --exclude-kind and --exclude-object may be specified several times.
+--exclude-kind (-x) and --exclude-object (-y) may be specified several times.
 
 Usage:
   katafygio [flags]
@@ -78,15 +78,15 @@ Flags:
 
 ## Config file and env variables
 
-All settings can be passed by cli, or environment variable, or in a yaml configuration file
-(thanks to Viper and Cobra libs). The environment are the same as cli options, in uppercase,
-prefixed by "KF", and with underscore instead of dashs. ie.:
+All settings can be passed by command line options, or environment variable, or in a yaml
+configuration file (thanks to Viper and Cobra libs). The environment are the same as cli options,
+in uppercase, prefixed by "KF", and with underscore instead of dashs. ie.:
 
 ```
 export KF_GIT_URL=https://user:token@github.com/myorg/myrepos.git
 export KF_LOCAL_DIR=/tmp/kfdump
 
-# exception: kube config path may be passed as such (for kubectl compatibility)
+# exception, for kubectl compatibility:
 export KUBECONFIG=/tmp/kconfig
 ```
 
@@ -98,6 +98,8 @@ Assuming you have go 1.10 and glide in the path, and GOPATH configured:
 make deps
 make build
 ```
+
+You can also use pre-build binaries from the [releases](https://github.com/bpineau/katafygio/releases) page, or the [docker image](https://hub.docker.com/r/bpineau/katafygio/).
 
 ## See Also
 
