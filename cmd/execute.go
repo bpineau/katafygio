@@ -50,7 +50,7 @@ var (
 		Use:   appName,
 		Short: "Backup Kubernetes cluster as yaml files",
 		Long: "Backup Kubernetes cluster as yaml files in a git repository.\n" +
-			"The --exclude-kind and --exclude-object may be specified several times.",
+			"--exclude-kind (x) and --exclude-object (-y) may be specified several times.",
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conf := &config.KfConfig{
