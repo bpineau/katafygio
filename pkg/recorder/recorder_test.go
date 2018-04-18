@@ -28,7 +28,7 @@ func TestRecorder(t *testing.T) {
 	conf := &config.KfConfig{
 		Logger:     log.New("info", "", "test"),
 		LocalDir:   "/tmp/ktest", // fake dir (in memory fs provided by Afero)
-		ResyncIntv: 60,
+		ResyncIntv: 60 * time.Second,
 	}
 
 	rec := New(conf, evt).Start()
@@ -71,7 +71,7 @@ func TestDryRunRecorder(t *testing.T) {
 	conf := &config.KfConfig{
 		Logger:     log.New("info", "", "test"),
 		LocalDir:   "/tmp/ktest",
-		ResyncIntv: 60,
+		ResyncIntv: 60 * time.Second,
 	}
 
 	conf.DryRun = true
@@ -106,7 +106,7 @@ func TestFailingFSRecorder(t *testing.T) {
 	conf := &config.KfConfig{
 		Logger:     log.New("info", "", "test"),
 		LocalDir:   "/tmp/ktest", // fake dir (in memory fs provided by Afero)
-		ResyncIntv: 60,
+		ResyncIntv: 60 * time.Second,
 	}
 
 	rec := New(conf, evt).Start()
