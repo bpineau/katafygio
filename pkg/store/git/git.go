@@ -5,13 +5,14 @@
 // aren't pure Go either. So we need the git binary for now.
 
 // Package git makes a git repository out of a local directory, keeps the
-// content committed when the directory changes, and optionaly (if a remote
-// repos url is provided), keep it in sync with a remote repository.
+// content committed when the directory content changes, and optionaly (if
+// a remote repos url is provided), keep it in sync with a remote repository.
 package git
 
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"time"
 
@@ -24,6 +25,9 @@ import (
 var (
 	timeoutCommands = 60 * time.Second
 	checkInterval   = 10 * time.Second
+	gitAuthor       = "Katafygio"
+	gitEmail        = "katafygio@localhost"
+	gitMsg          = "Kubernetes cluster change"
 )
 
 var appFs = afero.NewOsFs()
@@ -47,9 +51,9 @@ func New(config *config.KfConfig) *Store {
 		Logger:   config.Logger,
 		URL:      config.GitURL,
 		LocalDir: config.LocalDir,
-		Author:   "Katafygio", // XXX should we expose a cli option for that?
-		Email:    "katafygio@localhost",
-		Msg:      "Kubernetes cluster change",
+		Author:   gitAuthor,
+		Email:    gitEmail,
+		Msg:      gitMsg,
 		DryRun:   config.DryRun,
 	}
 }
@@ -60,7 +64,7 @@ func (s *Store) Start() (*Store, error) {
 	s.stopch = make(chan struct{})
 	s.donech = make(chan struct{})
 
-	err := s.Clone()
+	err := s.CloneOrInit()
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +105,7 @@ func (s *Store) Git(args ...string) error {
 
 	cmd := exec.CommandContext(ctx, "git", args...) // #nosec
 	cmd.Dir = s.LocalDir
+	cmd.Env = append(os.Environ(), fmt.Sprintf("GIT_DIR=%s/.git", s.LocalDir))
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -121,6 +126,7 @@ func (s *Store) Status() (changed bool, err error) {
 
 	cmd := exec.CommandContext(ctx, "git", "status", "--porcelain") // #nosec
 	cmd.Dir = s.LocalDir
+	cmd.Env = append(os.Environ(), fmt.Sprintf("GIT_DIR=%s/.git", s.LocalDir))
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -134,8 +140,9 @@ func (s *Store) Status() (changed bool, err error) {
 	return false, nil
 }
 
-// Clone does git clone, or git init (when there's no GitURL to clone from)
-func (s *Store) Clone() (err error) {
+// CloneOrInit create a new local repository, either with "git clone" (if a GitURL
+// to clone from is provided), or "git init" (in the absence of GitURL).
+func (s *Store) CloneOrInit() (err error) {
 	if !s.DryRun {
 		err = appFs.MkdirAll(s.LocalDir, 0700)
 		if err != nil {

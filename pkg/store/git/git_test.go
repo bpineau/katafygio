@@ -106,7 +106,7 @@ func TestGit(t *testing.T) {
 	repo.LocalDir = newdir
 	repo.URL = dir
 
-	err = repo.Clone()
+	err = repo.CloneOrInit()
 	if err != nil {
 		t.Errorf("clone failed: %v", err)
 	}
