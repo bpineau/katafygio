@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"flag"
 	"strings"
 	"testing"
 	"time"
@@ -73,6 +74,7 @@ var (
 )
 
 func TestController(t *testing.T) {
+	flag.Lookup("logtostderr").Value.Set("true")
 
 	conf := &config.KfConfig{
 		Logger:        log.New("info", "", "test"),
