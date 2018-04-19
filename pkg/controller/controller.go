@@ -27,7 +27,8 @@ import (
 
 var (
 	maxProcessRetry = 6
-	canaryKey       = "$katafygio-canary"
+	canaryKey       = "$katafygio canary$"
+	unexported      = []string{"selfLink", "uid", "resourceVersion", "generation"}
 )
 
 // Interface describe a standard kubernetes controller
@@ -67,7 +68,7 @@ func New(client cache.ListerWatcher, notifier event.Notifier, name string, confi
 	informer := cache.NewSharedIndexInformer(
 		lw,
 		&unstructured.Unstructured{},
-		config.ResyncIntv,
+		config.ResyncIntv*time.Second,
 		cache.Indexers{},
 	)
 
@@ -193,12 +194,11 @@ func (c *Controller) processItem(key string) error {
 
 	// clear irrelevant attributes
 	uc := obj.UnstructuredContent()
-	md := uc["metadata"].(map[string]interface{})
 	delete(uc, "status")
-	delete(md, "selfLink")
-	delete(md, "uid")
-	delete(md, "resourceVersion")
-	delete(md, "generation")
+	md := uc["metadata"].(map[string]interface{})
+	for _, attr := range unexported {
+		delete(md, attr)
+	}
 
 	c.config.Logger.Debugf("Found %s/%s [%s]", obj.GetAPIVersion(), obj.GetKind(), key)
 
