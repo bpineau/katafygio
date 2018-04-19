@@ -104,10 +104,10 @@ func init() {
 		log.Fatal("Failed to bind cli argument:", err)
 	}
 
-	RootCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "Dry-run mode: don't store anything.")
+	RootCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "Dry-run mode: don't store anything")
 	bindPFlag("dry-run", "dry-run")
 
-	RootCmd.PersistentFlags().BoolVarP(&dumpMode, "dump-only", "m", false, "Dump mode: dump everything and exit")
+	RootCmd.PersistentFlags().BoolVarP(&dumpMode, "dump-only", "m", false, "Dump mode: dump everything once and exit")
 	bindPFlag("dump-only", "dump-only")
 
 	RootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "v", "info", "Log level")
