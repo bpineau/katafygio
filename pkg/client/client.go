@@ -10,8 +10,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 
-	// Ensure we have GCP auth method linked in
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	// Ensure we have auth plugins (gcp, azure, openstack, ...) linked in
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 // NewRestConfig create a *rest.Config, trying to mimic kubectl behavior:
