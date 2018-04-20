@@ -144,10 +144,22 @@ func (w *Listener) save(file string, data []byte) error {
 	w.actives[w.relativePath(file)] = true
 	w.activesLock.Unlock()
 
-	err = afero.WriteFile(appFs, file, data, 0600)
-
+	tmpf, err := afero.TempFile(appFs, "", "katafygio")
 	if err != nil {
-		return fmt.Errorf("failed to write to %s on disk: %v", file, err)
+		return fmt.Errorf("failed to create a temporary file: %v", err)
+	}
+
+	_, err = tmpf.Write(data)
+	if err != nil {
+		return fmt.Errorf("failed to write to %s on disk: %v", tmpf.Name(), err)
+	}
+
+	if err := tmpf.Close(); err != nil {
+		return fmt.Errorf("failed to close a temporary file: %v", err)
+	}
+
+	if err := appFs.Rename(tmpf.Name(), file); err != nil {
+		return fmt.Errorf("failed to rename %s to %s: %v", tmpf.Name(), file, err)
 	}
 
 	return nil
