@@ -68,7 +68,7 @@ func New(client cache.ListerWatcher, notifier event.Notifier, name string, confi
 	informer := cache.NewSharedIndexInformer(
 		lw,
 		&unstructured.Unstructured{},
-		config.ResyncIntv*time.Second,
+		config.ResyncIntv,
 		cache.Indexers{},
 	)
 
