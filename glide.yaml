@@ -5,6 +5,8 @@ import:
   subpackages:
   - kubernetes
   - plugin/pkg/client/auth/gcp
+  - plugin/pkg/client/auth/azure
+  - plugin/pkg/client/auth/oidc
   - rest
   - tools/clientcmd
   - tools/cache
@@ -37,3 +39,5 @@ import:
   version: ^1.0.0
 - package: github.com/spf13/afero
   version: ^1.1.0
+- package: github.com/Azure/go-autorest
+  version: v9.10.0
