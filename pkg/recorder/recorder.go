@@ -4,6 +4,7 @@ package recorder
 
 import (
 	"fmt"
+	"hash/crc64"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,12 +17,16 @@ import (
 	"github.com/bpineau/katafygio/pkg/event"
 )
 
-var appFs = afero.NewOsFs()
+var (
+	appFs      = afero.NewOsFs()
+	crc64Table = crc64.MakeTable(crc64.ECMA)
+)
 
 // activeFiles will contain a list of active (present in cluster) objets; we'll
 // use that to periodically find and garbage collect stale objets in the git repos
-// (ie. if some objects were delete from cluster while katafygio was not running).
-type activeFiles map[string]bool
+// (ie. if some objects were delete from cluster while katafygio was not running),
+// and to skip already existing and unchanged files.
+type activeFiles map[string]uint64
 
 // Listener receive events from controllers and save them to disk as yaml files
 type Listener struct {
@@ -133,16 +138,21 @@ func (w *Listener) save(file string, data []byte) error {
 		return nil
 	}
 
+	csum := crc64.Checksum(data, crc64Table)
+
+	w.activesLock.RLock()
+	prevsum, ok := w.actives[w.relativePath(file)]
+	w.activesLock.RUnlock()
+	if ok && prevsum == csum {
+		return nil
+	}
+
 	dir := filepath.Clean(filepath.Dir(file))
 
 	err := appFs.MkdirAll(dir, 0700)
 	if err != nil {
 		return fmt.Errorf("can't create local directory %s: %v", dir, err)
 	}
-
-	w.activesLock.Lock()
-	w.actives[w.relativePath(file)] = true
-	w.activesLock.Unlock()
 
 	tmpf, err := afero.TempFile(appFs, "", "katafygio")
 	if err != nil {
@@ -161,6 +171,10 @@ func (w *Listener) save(file string, data []byte) error {
 	if err := appFs.Rename(tmpf.Name(), file); err != nil {
 		return fmt.Errorf("failed to rename %s to %s: %v", tmpf.Name(), file, err)
 	}
+
+	w.activesLock.Lock()
+	w.actives[w.relativePath(file)] = csum
+	w.activesLock.Unlock()
 
 	return nil
 }

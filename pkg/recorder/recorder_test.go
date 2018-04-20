@@ -36,6 +36,7 @@ func TestRecorder(t *testing.T) {
 	evt.Send(newNotif(event.Upsert, "foo1"))
 	evt.Send(newNotif(event.Upsert, "foo2"))
 	evt.Send(newNotif(event.Delete, "foo1"))
+	evt.Send(newNotif(event.Upsert, "foo2"))
 
 	rec.Stop() // to flush ongoing fs operations
 
