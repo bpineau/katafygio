@@ -126,7 +126,7 @@ func (w *Listener) relativePath(file string) string {
 	return strings.Replace(file, root+"/", "", 1)
 }
 
-func (w *Listener) save(file string, data string) error {
+func (w *Listener) save(file string, data []byte) error {
 	w.config.Logger.Debugf("Saving %s to disk", file)
 
 	if w.config.DryRun {
@@ -144,19 +144,10 @@ func (w *Listener) save(file string, data string) error {
 	w.actives[w.relativePath(file)] = true
 	w.activesLock.Unlock()
 
-	f, err := appFs.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		return fmt.Errorf("failed to create %s on disk: %v", file, err)
-	}
+	err = afero.WriteFile(appFs, file, data, 0600)
 
-	_, err = f.WriteString(data)
 	if err != nil {
 		return fmt.Errorf("failed to write to %s on disk: %v", file, err)
-	}
-
-	err = f.Close()
-	if err != nil {
-		return fmt.Errorf("failed to close %s file: %v", file, err)
 	}
 
 	return nil

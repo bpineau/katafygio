@@ -110,7 +110,7 @@ func TestController(t *testing.T) {
 	gotFoo2 := false
 	for _, ev := range evt.evts {
 		// ensure cleanup filters works as expected
-		if strings.Contains(ev.Object, "shouldnotbethere") {
+		if strings.Contains(string(ev.Object), "shouldnotbethere") {
 			t.Error("object cleanup filters didn't work")
 		}
 
