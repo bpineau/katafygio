@@ -10,7 +10,7 @@ var (
 		Action: Upsert,
 		Key:    "foo",
 		Kind:   "bar",
-		Object: "spam egg",
+		Object: []byte("spam egg"),
 	}
 )
 

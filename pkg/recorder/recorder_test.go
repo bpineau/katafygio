@@ -16,7 +16,7 @@ func newNotif(action event.Action, key string) *event.Notification {
 		Action: action,
 		Key:    key,
 		Kind:   "foo",
-		Object: "bar",
+		Object: []byte("bar"),
 	}
 }
 
@@ -116,7 +116,7 @@ func TestFailingFSRecorder(t *testing.T) {
 	// switching to failing (read-only) filesystem
 	appFs = afero.NewReadOnlyFs(appFs)
 
-	err := rec.save("foo", "bar")
+	err := rec.save("foo", []byte("bar"))
 	if err == nil {
 		t.Error("save should return an error in case of failure")
 	}

@@ -17,7 +17,7 @@ type Notification struct {
 	Action Action
 	Key    string
 	Kind   string
-	Object string
+	Object []byte
 }
 
 // Notifier mediates notifications between controllers and recorder

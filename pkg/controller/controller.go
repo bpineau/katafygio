@@ -186,7 +186,7 @@ func (c *Controller) processItem(key string) error {
 
 	if !exists {
 		// deleted object
-		c.enqueue(&event.Notification{Action: event.Delete, Key: key, Kind: c.name, Object: ""})
+		c.enqueue(&event.Notification{Action: event.Delete, Key: key, Kind: c.name, Object: nil})
 		return nil
 	}
 
@@ -207,7 +207,7 @@ func (c *Controller) processItem(key string) error {
 		return fmt.Errorf("failed to marshal %s: %v", key, err)
 	}
 
-	c.enqueue(&event.Notification{Action: event.Upsert, Key: key, Kind: c.name, Object: string(yml)})
+	c.enqueue(&event.Notification{Action: event.Upsert, Key: key, Kind: c.name, Object: yml})
 	return nil
 }
 
