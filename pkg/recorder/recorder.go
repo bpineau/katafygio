@@ -1,4 +1,4 @@
-// Package recorder listen for events notification from controllers,
+// Package recorder listen for event notifications from controllers,
 // and persists those events' content as files on disk.
 package recorder
 
@@ -38,7 +38,7 @@ type Listener struct {
 	donech      chan struct{}
 }
 
-// New creates a new Listener
+// New creates a new event Listener
 func New(config *config.KfConfig, events event.Notifier) *Listener {
 	return &Listener{
 		config:  config,
@@ -47,7 +47,7 @@ func New(config *config.KfConfig, events event.Notifier) *Listener {
 	}
 }
 
-// Start receive events and saves them to disk as files
+// Start continuously receive events and saves them to disk as files
 func (w *Listener) Start() *Listener {
 	w.config.Logger.Info("Starting event recorder")
 	err := appFs.MkdirAll(filepath.Clean(w.config.LocalDir), 0700)

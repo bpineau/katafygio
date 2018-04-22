@@ -1,12 +1,3 @@
-// We'd love a working pure Go implementation. But so far we didn't find any
-// that would work for us. src-d/go-git is innapropriate due to
-// https://github.com/src-d/go-git/issues/793 and
-// https://github.com/src-d/go-git/issues/785 . And binding to the libgit C lib
-// aren't pure Go either. So we need the git binary for now.
-
-// Package git makes a git repository out of a local directory, keeps the
-// content committed when the directory content changes, and optionaly (if
-// a remote repos url is provided), keep it in sync with a remote repository.
 package git
 
 import (
@@ -23,11 +14,20 @@ import (
 )
 
 var (
-	timeoutCommands = 60 * time.Second
-	checkInterval   = 10 * time.Second
-	gitAuthor       = "Katafygio"
-	gitEmail        = "katafygio@localhost"
-	gitMsg          = "Kubernetes cluster change"
+	// TimeoutCommands defines the max execution time for git commands
+	TimeoutCommands = 60 * time.Second
+
+	// CheckInterval defines the interval between local directory checks
+	CheckInterval = 10 * time.Second
+
+	// GitAuthor is the name of the commiter
+	GitAuthor = "Katafygio"
+
+	// GitEmail is the email of the commiter
+	GitEmail = "katafygio@localhost"
+
+	// GitMsg is the commit message we'll use
+	GitMsg = "Kubernetes cluster change"
 )
 
 var appFs = afero.NewOsFs()
@@ -51,9 +51,9 @@ func New(config *config.KfConfig) *Store {
 		Logger:   config.Logger,
 		URL:      config.GitURL,
 		LocalDir: config.LocalDir,
-		Author:   gitAuthor,
-		Email:    gitEmail,
-		Msg:      gitMsg,
+		Author:   GitAuthor,
+		Email:    GitEmail,
+		Msg:      GitMsg,
 		DryRun:   config.DryRun,
 	}
 }
@@ -70,7 +70,7 @@ func (s *Store) Start() (*Store, error) {
 	}
 
 	go func() {
-		checkTick := time.NewTicker(checkInterval)
+		checkTick := time.NewTicker(CheckInterval)
 		defer checkTick.Stop()
 		defer close(s.donech)
 
@@ -100,7 +100,7 @@ func (s *Store) Git(args ...string) error {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeoutCommands)
+	ctx, cancel := context.WithTimeout(context.Background(), TimeoutCommands)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "git", args...) // #nosec
@@ -121,7 +121,7 @@ func (s *Store) Status() (changed bool, err error) {
 		return false, nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeoutCommands)
+	ctx, cancel := context.WithTimeout(context.Background(), TimeoutCommands)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "git", "status", "--porcelain") // #nosec
