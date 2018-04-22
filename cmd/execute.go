@@ -46,7 +46,7 @@ var (
 				return fmt.Errorf("Failed to initialize the configuration: %v", err)
 			}
 
-			run.Run(conf) // <- this is where things happens
+			run.Run(conf) // <- this is where things happen
 			return nil
 		},
 	}
