@@ -44,6 +44,8 @@ func New(config *config.KfConfig, events event.Notifier) *Listener {
 		config:  config,
 		events:  events,
 		actives: activeFiles{},
+		stopch:  make(chan struct{}),
+		donech:  make(chan struct{}),
 	}
 }
 
@@ -58,8 +60,6 @@ func (w *Listener) Start() *Listener {
 	go func() {
 		evCh := w.events.ReadChan()
 		gcTick := time.NewTicker(w.config.ResyncIntv * 2)
-		w.stopch = make(chan struct{})
-		w.donech = make(chan struct{})
 		defer gcTick.Stop()
 		defer close(w.donech)
 
