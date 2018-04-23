@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/bpineau/katafygio/config"
+	"github.com/bpineau/katafygio/pkg/client"
 	"github.com/bpineau/katafygio/pkg/log"
 	"github.com/bpineau/katafygio/pkg/run"
 )
@@ -15,6 +16,8 @@ import (
 const appName = "katafygio"
 
 var (
+	restcfg client.Interface
+
 	// RootCmd is our main entry point, launching pkg/run.Run()
 	RootCmd = &cobra.Command{
 		Use:   appName,
@@ -22,11 +25,19 @@ var (
 		Long: "Backup Kubernetes cluster as yaml files in a git repository.\n" +
 			"--exclude-kind (-x) and --exclude-object (-y) may be specified several times.",
 
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			resync := time.Duration(viper.GetInt("resync-interval")) * time.Second
 			logger := log.New(viper.GetString("log.level"),
 				viper.GetString("log.server"),
 				viper.GetString("log.output"))
+
+			if restcfg == nil {
+				restcfg, err = client.New(viper.GetString("api-server"),
+					viper.GetString("kube-config"))
+				if err != nil {
+					return fmt.Errorf("failed to create a client: %v", err)
+				}
+			}
 
 			conf := &config.KfConfig{
 				DryRun:        viper.GetBool("dry-run"),
@@ -38,12 +49,8 @@ var (
 				ExcludeKind:   viper.GetStringSlice("exclude-kind"),
 				ExcludeObject: viper.GetStringSlice("exclude-object"),
 				HealthPort:    viper.GetInt("healthcheck-port"),
+				Client:        restcfg,
 				ResyncIntv:    resync,
-			}
-
-			err := conf.Init(viper.GetString("api-server"), viper.GetString("kube-config"))
-			if err != nil {
-				return fmt.Errorf("Failed to initialize the configuration: %v", err)
 			}
 
 			run.Run(conf) // <- this is where things happen

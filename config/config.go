@@ -7,7 +7,6 @@ import (
 	"github.com/bpineau/katafygio/pkg/client"
 
 	"github.com/sirupsen/logrus"
-	"k8s.io/client-go/rest"
 )
 
 // KfConfig holds the configuration options passed at launch time (and the rest client)
@@ -22,7 +21,7 @@ type KfConfig struct {
 	Logger *logrus.Logger
 
 	// Client represents a connection to a Kubernetes cluster
-	Client *rest.Config
+	Client client.Interface
 
 	// GitURL is the address of a remote git repository
 	GitURL string
@@ -48,9 +47,9 @@ type KfConfig struct {
 
 // Init initialize the config
 func (c *KfConfig) Init(apiserver string, kubeconfig string) (err error) {
-	c.Client, err = client.NewRestConfig(apiserver, kubeconfig)
+	c.Client, err = client.New(apiserver, kubeconfig)
 	if err != nil {
-		return fmt.Errorf("Failed init Kubernetes clientset: %+v", err)
+		return fmt.Errorf("Failed init Kubernetes client: %+v", err)
 	}
 	return nil
 }
