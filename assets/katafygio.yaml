@@ -1,0 +1,44 @@
+## Katafygio configuration file
+
+# To provide alternate api-server URL or config to reach the cluster:
+#api-server: http://127.0.0.1:8080
+#kube-config: /etc/kubernetes/config
+
+log:
+  level: "info"
+  output: "stderr"
+  #server: "localhost:514" # mandatory if log-output: "syslog"
+
+# Where to save the yaml dumps
+local-dir: /var/cache/katafygio
+
+# Remote url is optional. If provided, Katafygio will push there.
+#git-url: https://user:token@github.com/myorg/myrepos.git
+
+# Port to listen for http health check probes. 0 to disable.
+healthcheck-port: 0
+
+# How often should Katafygio full resync. Only needed to catch possibly
+# missed events: events are handled in real-time. 0 to disable.
+resync-interval: 900
+
+# To only include objects matching a kubernetes selector:
+#filter: "vendor=foo,app=bar"
+
+# Example exclusions by object kind. E.g.: keep secrets confidential,
+# don't dump pods or replicaset  they are all managed by deployments
+# or daemonsets (which are already dumped), endpoints (managed by services,
+# already dumped), and noisy stuff (events, nodes...).
+#exclude-kind:
+#  - secret
+#  - pod
+#  - replicaset
+#  - node
+#  - event
+#  - endpoints
+
+# Example exclusion for specific objects:
+#exclude-object:
+#  - configmap:kube-system/datadog-leader-elector
+#  - deployment:default/testdeploy
+
