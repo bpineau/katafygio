@@ -8,10 +8,16 @@ builds:
       - linux
     goarch:
       - amd64
+      - arm
+      - arm64
+      - "386"
 
 release:
   # don't autopublish
   draft: true
+
+sign:
+  artifacts: checksum
 
 archive:
   format: binary
@@ -36,11 +42,22 @@ nfpm:
   description: Discover and continuously backup Kubernetes objets as yaml files in git
   maintainer: Benjamin Pineau <ben.pineau@gmail.com>
   license: MIT
+  bindir: /usr/bin
   vendor: Benjamin Pineau
   formats:
     - deb
     - rpm
   dependencies:
     - git
-  replacements:
-    amd64: x86_64
+  config_files:
+    "./assets/katafygio.yaml": "/etc/katafygio/katafygio.yaml"
+  overrides:
+    rpm:
+      replacements:
+        amd64: x86_64
+        386: i686
+      name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    deb:
+      replacements:
+        386: i386
+      name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"

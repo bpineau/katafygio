@@ -78,8 +78,9 @@ Flags:
 
 ## Config file and env variables
 
-All settings can be passed by command line options, or environment variable, or in a yaml
-configuration file (thanks to Viper and Cobra libs). The environment are the same as cli options,
+All settings can be passed by command line options, or environment variable, or in
+[a yaml configuration file](https://github.com/bpineau/katafygio/blob/master/assets/katafygio.yaml)
+(thanks to Viper and Cobra libs). The environment are the same as cli options,
 in uppercase, prefixed by "KF", and with underscore instead of dashs. ie.:
 
 ```
