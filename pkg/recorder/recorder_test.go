@@ -142,6 +142,8 @@ func TestFailingFSRecorder(t *testing.T) {
 	// back to normal operations
 	rec.Stop() // just to flush ongoing ops before switch filesystem
 	appFs = afero.NewMemMapFs()
+	rec.stopch = make(chan struct{})
+	rec.donech = make(chan struct{})
 	rec.Start()
 	evt.Send(newNotif(event.Upsert, "foo2"))
 	rec.Stop() // flush ongoing ops
