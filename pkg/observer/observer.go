@@ -56,8 +56,8 @@ func New(config *config.KfConfig, notif event.Notifier, factory ControllerFactor
 	return &Observer{
 		config:    config,
 		notifier:  notif,
-		discovery: discovery.NewDiscoveryClientForConfigOrDie(config.Client),
-		cpool:     dynamic.NewDynamicClientPool(config.Client),
+		discovery: discovery.NewDiscoveryClientForConfigOrDie(config.Client.GetRestConfig()),
+		cpool:     dynamic.NewDynamicClientPool(config.Client.GetRestConfig()),
 		ctrls:     make(controllerCollection),
 		factory:   factory,
 	}

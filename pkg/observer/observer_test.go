@@ -46,6 +46,12 @@ func (m *mockFactory) NewController(client cache.ListerWatcher, notifier event.N
 	return &mockCtrl{}
 }
 
+type mockClient struct{}
+
+func (m *mockClient) GetRestConfig() *restclient.Config {
+	return &restclient.Config{}
+}
+
 var stdVerbs = []string{"list", "get", "watch"}
 var emptyExclude = make([]string, 0)
 
@@ -171,7 +177,7 @@ var resourcesTests = []resTest{
 func TestObserver(t *testing.T) {
 	for _, tt := range resourcesTests {
 		conf := &config.KfConfig{
-			Client:      &restclient.Config{},
+			Client:      new(mockClient),
 			Logger:      log.New("info", "", "test"),
 			ExcludeKind: tt.exclude,
 		}
@@ -212,7 +218,7 @@ var duplicatesTest = []*metav1.APIResourceList{
 
 func TestObserverDuplicas(t *testing.T) {
 	conf := &config.KfConfig{
-		Client:        &restclient.Config{},
+		Client:        new(mockClient),
 		Logger:        log.New("info", "", "test"),
 		ExcludeKind:   make([]string, 0),
 		ExcludeObject: make([]string, 0),
@@ -242,7 +248,7 @@ func TestObserverDuplicas(t *testing.T) {
 
 func TestObserverRecoverFromDicoveryFailure(t *testing.T) {
 	conf := &config.KfConfig{
-		Client:        &restclient.Config{},
+		Client:        new(mockClient),
 		Logger:        log.New("info", "", "test"),
 		ExcludeKind:   make([]string, 0),
 		ExcludeObject: make([]string, 0),
