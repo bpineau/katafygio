@@ -6,9 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/event"
-	"github.com/bpineau/katafygio/pkg/log"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	fakecontroller "k8s.io/client-go/tools/cache/testing"
@@ -25,6 +23,11 @@ func (m *mockNotifier) Send(ev *event.Notification) {
 func (m *mockNotifier) ReadChan() <-chan event.Notification {
 	return make(chan event.Notification)
 }
+
+type mockLog struct{}
+
+func (m *mockLog) Infof(format string, args ...interface{})  {}
+func (m *mockLog) Errorf(format string, args ...interface{}) {}
 
 var (
 	obj1 = &unstructured.Unstructured{
@@ -76,19 +79,12 @@ var (
 func TestController(t *testing.T) {
 	flag.Lookup("logtostderr").Value.Set("true")
 
-	conf := &config.KfConfig{
-		Logger:        log.New("info", "", "test"),
-		ExcludeObject: []string{"pod:ns3/Bar3"},
-
-		// label filters can't be tested due to the way we inject objets in tests
-		Filter: "label1=something",
-	}
-
 	client := fakecontroller.NewFakeControllerSource()
 
 	evt := new(mockNotifier)
-	f := new(Factory)
-	ctrl := f.NewController(client, evt, "pod", conf)
+	log := new(mockLog)
+	f := NewFactory(log, "label1=something", 60, []string{"pod:ns3/Bar3"})
+	ctrl := f.NewController(client, evt, "pod")
 
 	// this will trigger a deletion event
 	idx := ctrl.(*Controller).informer.GetIndexer()

@@ -6,10 +6,8 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/controller"
 	"github.com/bpineau/katafygio/pkg/event"
-	"github.com/bpineau/katafygio/pkg/log"
 
 	appsv1beta2 "k8s.io/api/apps/v1beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -19,7 +17,7 @@ import (
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	fakeclientset "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/kubernetes/scheme"
-	restclient "k8s.io/client-go/rest"
+	"k8s.io/client-go/rest"
 	fakerest "k8s.io/client-go/rest/fake"
 	"k8s.io/client-go/tools/cache"
 )
@@ -40,17 +38,21 @@ type mockFactory struct {
 	names []string
 }
 
-func (m *mockFactory) NewController(client cache.ListerWatcher, notifier event.Notifier,
-	name string, config *config.KfConfig) controller.Interface {
+func (m *mockFactory) NewController(client cache.ListerWatcher, notifier event.Notifier, name string) controller.Interface {
 	m.names = append(m.names, name)
 	return &mockCtrl{}
 }
 
 type mockClient struct{}
 
-func (m *mockClient) GetRestConfig() *restclient.Config {
-	return &restclient.Config{}
+func (m *mockClient) GetRestConfig() *rest.Config {
+	return &rest.Config{}
 }
+
+type mockLog struct{}
+
+func (m *mockLog) Infof(format string, args ...interface{})  {}
+func (m *mockLog) Errorf(format string, args ...interface{}) {}
 
 var stdVerbs = []string{"list", "get", "watch"}
 var emptyExclude = make([]string, 0)
@@ -176,18 +178,14 @@ var resourcesTests = []resTest{
 
 func TestObserver(t *testing.T) {
 	for _, tt := range resourcesTests {
-		conf := &config.KfConfig{
-			Client:      new(mockClient),
-			Logger:      log.New("info", "", "test"),
-			ExcludeKind: tt.exclude,
-		}
+		factory := new(mockFactory)
+		obs := New(new(mockLog), new(mockClient), &mockNotifier{}, factory, tt.exclude)
 
 		client := fakeclientset.NewSimpleClientset()
 		fakeDiscovery, _ := client.Discovery().(*fakediscovery.FakeDiscovery)
 		fakeDiscovery.Resources = tt.resources
-		factory := new(mockFactory)
-		obs := New(conf, &mockNotifier{}, factory)
 		obs.discovery = fakeDiscovery
+
 		obs.Start()
 		obs.Stop()
 
@@ -217,19 +215,12 @@ var duplicatesTest = []*metav1.APIResourceList{
 }
 
 func TestObserverDuplicas(t *testing.T) {
-	conf := &config.KfConfig{
-		Client:        new(mockClient),
-		Logger:        log.New("info", "", "test"),
-		ExcludeKind:   make([]string, 0),
-		ExcludeObject: make([]string, 0),
-	}
-
 	client := fakeclientset.NewSimpleClientset()
 	fakeDiscovery, _ := client.Discovery().(*fakediscovery.FakeDiscovery)
 	fakeDiscovery.Resources = duplicatesTest
 
 	factory := new(mockFactory)
-	obs := New(conf, &mockNotifier{}, factory)
+	obs := New(new(mockLog), new(mockClient), &mockNotifier{}, factory, make([]string, 0))
 	obs.discovery = fakeDiscovery
 	obs.Start()
 	err := obs.refresh()
@@ -247,13 +238,6 @@ func TestObserverDuplicas(t *testing.T) {
 }
 
 func TestObserverRecoverFromDicoveryFailure(t *testing.T) {
-	conf := &config.KfConfig{
-		Client:        new(mockClient),
-		Logger:        log.New("info", "", "test"),
-		ExcludeKind:   make([]string, 0),
-		ExcludeObject: make([]string, 0),
-	}
-
 	client := fakeclientset.NewSimpleClientset()
 	fakeDiscovery, _ := client.Discovery().(*fakediscovery.FakeDiscovery)
 	fakeDiscovery.Resources = duplicatesTest
@@ -266,10 +250,10 @@ func TestObserverRecoverFromDicoveryFailure(t *testing.T) {
 	}
 
 	factory := new(mockFactory)
-	obs := New(conf, &mockNotifier{}, factory)
+	obs := New(new(mockLog), new(mockClient), &mockNotifier{}, factory, make([]string, 0))
 
 	// failing discovery
-	obs.discovery.RESTClient().(*restclient.RESTClient).Client = fakeClient.Client
+	obs.discovery.RESTClient().(*rest.RESTClient).Client = fakeClient.Client
 	obs.Start()
 	obs.Stop()
 
