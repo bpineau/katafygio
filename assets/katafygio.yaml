@@ -4,10 +4,9 @@
 #api-server: http://127.0.0.1:8080
 #kube-config: /etc/kubernetes/config
 
-log:
-  level: "info"
-  output: "stderr"
-  #server: "localhost:514" # mandatory if log-output: "syslog"
+log-level: "info"
+log-output: "stderr"
+#log-server: "localhost:514" # mandatory if log-output: "syslog"
 
 # Where to save the yaml dumps
 local-dir: /var/cache/katafygio
