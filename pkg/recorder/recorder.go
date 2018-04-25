@@ -13,7 +13,6 @@ import (
 
 	"github.com/spf13/afero"
 
-	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/event"
 )
 
@@ -21,6 +20,11 @@ var (
 	appFs      = afero.NewOsFs()
 	crc64Table = crc64.MakeTable(crc64.ECMA)
 )
+
+type logger interface {
+	Infof(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+}
 
 // activeFiles will contain a list of active (present in cluster) objets; we'll
 // use that to periodically find and garbage collect stale objets in the git repos
@@ -30,36 +34,42 @@ type activeFiles map[string]uint64
 
 // Listener receive events from controllers and save them to disk as yaml files
 type Listener struct {
-	config      *config.KfConfig
+	logger      logger
 	events      event.Notifier
 	actives     activeFiles
 	activesLock sync.RWMutex
+	localDir    string
+	gcInterval  time.Duration
+	dryRun      bool
 	stopch      chan struct{}
 	donech      chan struct{}
 }
 
 // New creates a new event Listener
-func New(config *config.KfConfig, events event.Notifier) *Listener {
+func New(log logger, events event.Notifier, localDir string, gcInterval int, dryRun bool) *Listener {
 	return &Listener{
-		config:  config,
-		events:  events,
-		actives: activeFiles{},
-		stopch:  make(chan struct{}),
-		donech:  make(chan struct{}),
+		logger:     log,
+		events:     events,
+		actives:    activeFiles{},
+		localDir:   localDir,
+		dryRun:     dryRun,
+		gcInterval: time.Duration(gcInterval) * time.Second,
+		stopch:     make(chan struct{}),
+		donech:     make(chan struct{}),
 	}
 }
 
 // Start continuously receive events and saves them to disk as files
 func (w *Listener) Start() *Listener {
-	w.config.Logger.Info("Starting event recorder")
-	err := appFs.MkdirAll(filepath.Clean(w.config.LocalDir), 0700)
+	w.logger.Infof("Starting event recorder")
+	err := appFs.MkdirAll(filepath.Clean(w.localDir), 0700)
 	if err != nil {
-		panic(fmt.Sprintf("Can't create directory %s: %v", w.config.LocalDir, err))
+		panic(fmt.Sprintf("Can't create directory %s: %v", w.localDir, err))
 	}
 
 	go func() {
 		evCh := w.events.ReadChan()
-		gcTick := time.NewTicker(w.config.ResyncIntv * 2)
+		gcTick := time.NewTicker(w.gcInterval)
 		defer gcTick.Stop()
 		defer close(w.donech)
 
@@ -80,15 +90,15 @@ func (w *Listener) Start() *Listener {
 
 // Stop halts the recorder service
 func (w *Listener) Stop() {
-	w.config.Logger.Info("Stopping event recorder")
+	w.logger.Infof("Stopping event recorder")
 	close(w.stopch)
 	<-w.donech
 }
 
 func (w *Listener) processNextEvent(ev *event.Notification) {
-	path, err := getPath(w.config.LocalDir, ev)
+	path, err := getPath(w.localDir, ev)
 	if err != nil {
-		w.config.Logger.Errorf("failed to get %s path: %v", ev.Key, err)
+		w.logger.Errorf("failed to get %s path: %v", ev.Key, err)
 	}
 
 	switch ev.Action {
@@ -99,7 +109,7 @@ func (w *Listener) processNextEvent(ev *event.Notification) {
 	}
 
 	if err != nil {
-		w.config.Logger.Errorf("failed to delete or save %s: %v", ev.Key, err)
+		w.logger.Errorf("failed to delete or save %s: %v", ev.Key, err)
 	}
 }
 
@@ -115,8 +125,7 @@ func getPath(root string, ev *event.Notification) (string, error) {
 }
 
 func (w *Listener) remove(file string) error {
-	w.config.Logger.Debugf("Removing %s from disk", file)
-	if w.config.DryRun {
+	if w.dryRun {
 		return nil
 	}
 
@@ -127,14 +136,12 @@ func (w *Listener) remove(file string) error {
 }
 
 func (w *Listener) relativePath(file string) string {
-	root := filepath.Clean(w.config.LocalDir)
+	root := filepath.Clean(w.localDir)
 	return strings.Replace(file, root+"/", "", 1)
 }
 
 func (w *Listener) save(file string, data []byte) error {
-	w.config.Logger.Debugf("Saving %s to disk", file)
-
-	if w.config.DryRun {
+	if w.dryRun {
 		return nil
 	}
 
@@ -182,7 +189,7 @@ func (w *Listener) save(file string, data []byte) error {
 func (w *Listener) deleteObsoleteFiles() {
 	w.activesLock.RLock()
 	defer w.activesLock.RUnlock()
-	root := filepath.Clean(w.config.LocalDir)
+	root := filepath.Clean(w.localDir)
 
 	err := afero.Walk(appFs, root, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
@@ -198,8 +205,7 @@ func (w *Listener) deleteObsoleteFiles() {
 			return nil
 		}
 
-		w.config.Logger.Debugf("Removing %s from disk", path)
-		if !w.config.DryRun {
+		if !w.dryRun {
 			return appFs.Remove(filepath.Clean(path))
 		}
 
@@ -207,6 +213,6 @@ func (w *Listener) deleteObsoleteFiles() {
 	})
 
 	if err != nil {
-		w.config.Logger.Warnf("failed to gc some files: %v", err)
+		w.logger.Errorf("failed to gc some files: %v", err)
 	}
 }

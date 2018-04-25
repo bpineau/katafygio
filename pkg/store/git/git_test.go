@@ -7,9 +7,6 @@ import (
 	"testing"
 
 	"github.com/spf13/afero"
-
-	"github.com/bpineau/katafygio/config"
-	"github.com/bpineau/katafygio/pkg/log"
 )
 
 var testHasGit bool
@@ -21,16 +18,20 @@ func init() {
 	}
 }
 
-func TestGitDryRun(t *testing.T) {
-	appFs = afero.NewMemMapFs()
+type mockLog struct{}
 
-	conf := &config.KfConfig{
-		DryRun:   true,
-		Logger:   log.New("info", "", "test"),
-		LocalDir: "/tmp/ktest", // fake dir (in memory fs provided by Afero)
+func (m *mockLog) Infof(format string, args ...interface{})  {}
+func (m *mockLog) Errorf(format string, args ...interface{}) {}
+
+func TestGitDryRun(t *testing.T) {
+	if !testHasGit {
+		t.Log("git not found, skipping")
+		t.Skip()
 	}
 
-	repo, err := New(conf).Start()
+	appFs = afero.NewMemMapFs()
+
+	repo, err := New(new(mockLog), true, "/tmp/ktest", "").Start()
 	if err != nil {
 		t.Errorf("failed to start git: %v", err)
 	}
@@ -57,12 +58,7 @@ func TestGit(t *testing.T) {
 
 	defer os.RemoveAll(dir)
 
-	conf := &config.KfConfig{
-		Logger:   log.New("info", "", "test"),
-		LocalDir: dir,
-	}
-
-	repo, err := New(conf).Start()
+	repo, err := New(new(mockLog), false, dir, "").Start()
 	if err != nil {
 		t.Errorf("failed to start git: %v", err)
 	}

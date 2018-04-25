@@ -8,9 +8,6 @@ import (
 	"time"
 
 	"github.com/spf13/afero"
-
-	"github.com/bpineau/katafygio/config"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -32,11 +29,16 @@ var (
 
 var appFs = afero.NewOsFs()
 
+type logger interface {
+	Infof(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+}
+
 // Store will maintain a git repository off dumped kube objects
 type Store struct {
-	Logger   *logrus.Logger
-	URL      string
+	Logger   logger
 	LocalDir string
+	URL      string
 	Author   string
 	Email    string
 	Msg      string
@@ -45,22 +47,22 @@ type Store struct {
 	donech   chan struct{}
 }
 
-// New instantiate a new git Store
-func New(config *config.KfConfig) *Store {
+// New instantiate a new git Store. url is optional.
+func New(log logger, dryRun bool, dir, url string) *Store {
 	return &Store{
-		Logger:   config.Logger,
-		URL:      config.GitURL,
-		LocalDir: config.LocalDir,
+		Logger:   log,
+		LocalDir: dir,
+		URL:      url,
 		Author:   GitAuthor,
 		Email:    GitEmail,
 		Msg:      GitMsg,
-		DryRun:   config.DryRun,
+		DryRun:   dryRun,
 	}
 }
 
 // Start maintains a directory content committed
 func (s *Store) Start() (*Store, error) {
-	s.Logger.Info("Starting git repository synchronizer")
+	s.Logger.Infof("Starting git repository synchronizer")
 	s.stopch = make(chan struct{})
 	s.donech = make(chan struct{})
 
@@ -89,7 +91,7 @@ func (s *Store) Start() (*Store, error) {
 
 // Stop stops the git goroutine
 func (s *Store) Stop() {
-	s.Logger.Info("Stopping git repository synchronizer")
+	s.Logger.Infof("Stopping git repository synchronizer")
 	close(s.stopch)
 	<-s.donech
 }
@@ -212,7 +214,7 @@ func (s *Store) Push() error {
 func (s *Store) commitAndPush() {
 	changed, err := s.Commit()
 	if err != nil {
-		s.Logger.Warn(err)
+		s.Logger.Errorf("%v", err)
 	}
 
 	if !changed || s.URL == "" {
@@ -221,6 +223,6 @@ func (s *Store) commitAndPush() {
 
 	err = s.Push()
 	if err != nil {
-		s.Logger.Warn(err)
+		s.Logger.Errorf("%v", err)
 	}
 }

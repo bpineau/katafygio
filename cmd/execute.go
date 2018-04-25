@@ -48,15 +48,15 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 		ResyncIntv:    resync,
 	}
 
-	repo, err := git.New(conf).Start()
+	repo, err := git.New(logger, dryRun, localDir, gitURL).Start()
 	if err != nil {
 		conf.Logger.Fatalf("failed to start git repo handler: %v", err)
 	}
 
 	evts := event.New()
-	reco := recorder.New(conf, evts).Start()
+	reco := recorder.New(logger, evts, localDir, resyncInt*2, dryRun).Start()
 	obsv := observer.New(conf, evts, &controller.Factory{}).Start()
-	http := health.New(conf).Start()
+	http := health.New(logger, healthP).Start()
 
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGTERM)

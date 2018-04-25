@@ -6,10 +6,13 @@ import (
 
 	"github.com/spf13/afero"
 
-	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/event"
-	"github.com/bpineau/katafygio/pkg/log"
 )
+
+type mockLog struct{}
+
+func (m *mockLog) Infof(format string, args ...interface{})  {}
+func (m *mockLog) Errorf(format string, args ...interface{}) {}
 
 func newNotif(action event.Action, key string) *event.Notification {
 	return &event.Notification{
@@ -20,18 +23,17 @@ func newNotif(action event.Action, key string) *event.Notification {
 	}
 }
 
+var (
+	logs    = new(mockLog)
+	fakedir = "/tmp/ktest"
+)
+
 func TestRecorder(t *testing.T) {
 	appFs = afero.NewMemMapFs()
 
 	evt := event.New()
 
-	conf := &config.KfConfig{
-		Logger:     log.New("info", "", "test"),
-		LocalDir:   "/tmp/ktest", // fake dir (in memory fs provided by Afero)
-		ResyncIntv: 60 * time.Second,
-	}
-
-	rec := New(conf, evt).Start()
+	rec := New(logs, evt, fakedir, 120, false).Start()
 
 	evt.Send(newNotif(event.Upsert, "foo1"))
 	evt.Send(newNotif(event.Upsert, "foo2"))
@@ -40,17 +42,17 @@ func TestRecorder(t *testing.T) {
 
 	rec.Stop() // to flush ongoing fs operations
 
-	exist, _ := afero.Exists(appFs, conf.LocalDir+"/foo-foo2.yaml")
+	exist, _ := afero.Exists(appFs, fakedir+"/foo-foo2.yaml")
 	if !exist {
 		t.Error("foo-foo2.yaml should exist; upsert event didn't propagate")
 	}
 
-	exist, _ = afero.Exists(appFs, conf.LocalDir+"/foo-foo1.yaml")
+	exist, _ = afero.Exists(appFs, fakedir+"/foo-foo1.yaml")
 	if exist {
 		t.Error("foo-foo1.yaml shouldn't exist, delete event didn't propagate")
 	}
 
-	rogue := conf.LocalDir + "/roguefile.yaml"
+	rogue := fakedir + "/roguefile.yaml"
 	_ = afero.WriteFile(appFs, rogue, []byte{42}, 0600)
 	_ = afero.WriteFile(appFs, rogue+".txt", []byte{42}, 0600)
 	rec.deleteObsoleteFiles()
@@ -69,26 +71,19 @@ func TestRecorder(t *testing.T) {
 func TestDryRunRecorder(t *testing.T) {
 	appFs = afero.NewMemMapFs()
 
-	conf := &config.KfConfig{
-		Logger:     log.New("info", "", "test"),
-		LocalDir:   "/tmp/ktest",
-		ResyncIntv: 60 * time.Second,
-	}
-
-	conf.DryRun = true
 	dryevt := event.New()
-	dryrec := New(conf, dryevt).Start()
+	dryrec := New(logs, dryevt, fakedir, 60, true).Start()
 	dryevt.Send(newNotif(event.Upsert, "foo3"))
 	dryevt.Send(newNotif(event.Upsert, "foo4"))
 	dryevt.Send(newNotif(event.Delete, "foo4"))
 	dryrec.Stop()
 
-	exist, _ := afero.Exists(appFs, conf.LocalDir+"/foo-foo3.yaml")
+	exist, _ := afero.Exists(appFs, fakedir+"/foo-foo3.yaml")
 	if exist {
 		t.Error("foo-foo3.yaml was created but we're in dry-run mode")
 	}
 
-	rogue := conf.LocalDir + "/roguefile.yaml"
+	rogue := fakedir + "/roguefile.yaml"
 	_ = afero.WriteFile(appFs, rogue, []byte{42}, 0600)
 	dryrec.deleteObsoleteFiles()
 
@@ -104,15 +99,9 @@ func TestFailingFSRecorder(t *testing.T) {
 
 	evt := event.New()
 
-	conf := &config.KfConfig{
-		Logger:     log.New("info", "", "test"),
-		LocalDir:   "/tmp/ktest", // fake dir (in memory fs provided by Afero)
-		ResyncIntv: 60 * time.Second,
-	}
+	rec := New(logs, evt, fakedir, 60, false).Start()
 
-	rec := New(conf, evt).Start()
-
-	_ = afero.WriteFile(appFs, conf.LocalDir+"/foo.yaml", []byte{42}, 0600)
+	_ = afero.WriteFile(appFs, fakedir+"/foo.yaml", []byte{42}, 0600)
 
 	// switching to failing (read-only) filesystem
 	appFs = afero.NewReadOnlyFs(appFs)
@@ -148,7 +137,7 @@ func TestFailingFSRecorder(t *testing.T) {
 	evt.Send(newNotif(event.Upsert, "foo2"))
 	rec.Stop() // flush ongoing ops
 
-	exist, _ := afero.Exists(appFs, conf.LocalDir+"/foo-foo2.yaml")
+	exist, _ := afero.Exists(appFs, fakedir+"/foo-foo2.yaml")
 	if !exist {
 		t.Error("foo-foo2.yaml should exist; recorder should recover from fs failures")
 	}
