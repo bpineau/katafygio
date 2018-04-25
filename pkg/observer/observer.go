@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/controller"
 	"github.com/bpineau/katafygio/pkg/event"
 
@@ -18,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -25,16 +25,23 @@ const discoveryInterval = 60 * time.Second
 
 // ControllerFactory make controllers generation interchangeable
 type ControllerFactory interface {
-	NewController(client cache.ListerWatcher, notifier event.Notifier,
-		name string, config *config.KfConfig) controller.Interface
+	NewController(client cache.ListerWatcher, notifier event.Notifier, name string) controller.Interface
 }
 
 type controllerCollection map[string]controller.Interface
 
+type restclient interface {
+	GetRestConfig() *rest.Config
+}
+
+type logger interface {
+	Infof(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+}
+
 // Observer watch api-server and manage kubernetes controllers lifecyles
 type Observer struct {
 	sync.RWMutex // protect ctrls
-	config       *config.KfConfig
 	stopCh       chan struct{}
 	doneCh       chan struct{}
 	notifier     event.Notifier
@@ -42,6 +49,8 @@ type Observer struct {
 	cpool        dynamic.ClientPool
 	ctrls        controllerCollection
 	factory      ControllerFactory
+	logger       logger
+	excludedkind []string
 }
 
 type gvk struct {
@@ -52,20 +61,21 @@ type gvk struct {
 type resources map[string]*gvk
 
 // New returns a new observer, that will watch API resources and create controllers
-func New(config *config.KfConfig, notif event.Notifier, factory ControllerFactory) *Observer {
+func New(log logger, client restclient, notif event.Notifier, factory ControllerFactory, excluded []string) *Observer {
 	return &Observer{
-		config:    config,
-		notifier:  notif,
-		discovery: discovery.NewDiscoveryClientForConfigOrDie(config.Client.GetRestConfig()),
-		cpool:     dynamic.NewDynamicClientPool(config.Client.GetRestConfig()),
-		ctrls:     make(controllerCollection),
-		factory:   factory,
+		notifier:     notif,
+		discovery:    discovery.NewDiscoveryClientForConfigOrDie(client.GetRestConfig()),
+		cpool:        dynamic.NewDynamicClientPool(client.GetRestConfig()),
+		ctrls:        make(controllerCollection),
+		factory:      factory,
+		logger:       log,
+		excludedkind: excluded,
 	}
 }
 
 // Start starts the observer in a detached goroutine
 func (c *Observer) Start() *Observer {
-	c.config.Logger.Info("Starting all kubernetes controllers")
+	c.logger.Infof("Starting all kubernetes controllers")
 
 	c.stopCh = make(chan struct{})
 	c.doneCh = make(chan struct{})
@@ -78,7 +88,7 @@ func (c *Observer) Start() *Observer {
 		for {
 			err := c.refresh()
 			if err != nil {
-				c.config.Logger.Errorf("Refresh failed: %v", err)
+				c.logger.Errorf("Refresh failed: %v", err)
 			}
 
 			select {
@@ -94,7 +104,7 @@ func (c *Observer) Start() *Observer {
 
 // Stop halts the observer
 func (c *Observer) Stop() {
-	c.config.Logger.Info("Stopping all kubernetes controllers")
+	c.logger.Infof("Stopping all kubernetes controllers")
 
 	c.stopCh <- struct{}{}
 
@@ -132,7 +142,7 @@ func (c *Observer) refresh() error {
 
 		client := cl.Resource(res.apiResource.DeepCopy(), metav1.NamespaceAll)
 
-		c.ctrls[name] = c.factory.NewController(client, c.notifier, cname, c.config)
+		c.ctrls[name] = c.factory.NewController(client, c.notifier, cname)
 		go c.ctrls[name].Start()
 	}
 
@@ -157,7 +167,7 @@ func (c *Observer) expandAndFilterAPIResources(groups []*metav1.APIResourceList)
 	for _, group := range groups {
 		gv, err := schema.ParseGroupVersion(group.GroupVersion)
 		if err != nil {
-			c.config.Logger.Errorf("unparsable group version: %v", err)
+			c.logger.Errorf("unparsable group version: %v", err)
 			continue
 		}
 
@@ -168,7 +178,7 @@ func (c *Observer) expandAndFilterAPIResources(groups []*metav1.APIResourceList)
 			}
 
 			// remove user filtered objet kinds
-			if isExcluded(c.config.ExcludeKind, ar.Kind) {
+			if isExcluded(c.excludedkind, ar.Kind) {
 				continue
 			}
 

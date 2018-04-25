@@ -5,11 +5,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/client"
 	"github.com/bpineau/katafygio/pkg/controller"
 	"github.com/bpineau/katafygio/pkg/event"
@@ -21,57 +19,6 @@ import (
 )
 
 const appName = "katafygio"
-
-func runE(cmd *cobra.Command, args []string) (err error) {
-
-	resync := time.Duration(resyncInt) * time.Second
-	logger := log.New(logLevel, logServer, logOutput)
-
-	if restcfg == nil {
-		restcfg, err = client.New(apiServer, kubeConf)
-		if err != nil {
-			return fmt.Errorf("failed to create a client: %v", err)
-		}
-	}
-
-	conf := &config.KfConfig{
-		DryRun:        dryRun,
-		DumpMode:      dumpMode,
-		Logger:        logger,
-		LocalDir:      localDir,
-		GitURL:        gitURL,
-		Filter:        filter,
-		ExcludeKind:   exclkind,
-		ExcludeObject: exclobj,
-		HealthPort:    healthP,
-		Client:        restcfg,
-		ResyncIntv:    resync,
-	}
-
-	repo, err := git.New(logger, dryRun, localDir, gitURL).Start()
-	if err != nil {
-		conf.Logger.Fatalf("failed to start git repo handler: %v", err)
-	}
-
-	evts := event.New()
-	reco := recorder.New(logger, evts, localDir, resyncInt*2, dryRun).Start()
-	obsv := observer.New(conf, evts, &controller.Factory{}).Start()
-	http := health.New(logger, healthP).Start()
-
-	sigterm := make(chan os.Signal, 1)
-	signal.Notify(sigterm, syscall.SIGTERM)
-	signal.Notify(sigterm, syscall.SIGINT)
-	if !conf.DumpMode {
-		<-sigterm
-	}
-
-	obsv.Stop()
-	repo.Stop()
-	reco.Stop()
-	http.Stop()
-
-	return nil
-}
 
 var (
 	restcfg client.Interface
@@ -86,6 +33,42 @@ var (
 		RunE:   runE,
 	}
 )
+
+func runE(cmd *cobra.Command, args []string) (err error) {
+	logger := log.New(logLevel, logServer, logOutput)
+
+	if restcfg == nil {
+		restcfg, err = client.New(apiServer, kubeConf)
+		if err != nil {
+			return fmt.Errorf("failed to create a client: %v", err)
+		}
+	}
+
+	repo, err := git.New(logger, dryRun, localDir, gitURL).Start()
+	if err != nil {
+		return fmt.Errorf("failed to start git repo handler: %v", err)
+	}
+
+	evts := event.New()
+	fact := controller.NewFactory(logger, filter, resyncInt, exclobj)
+	reco := recorder.New(logger, evts, localDir, resyncInt*2, dryRun).Start()
+	obsv := observer.New(logger, restcfg, evts, fact, exclkind).Start()
+	http := health.New(logger, healthP).Start()
+
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigterm, syscall.SIGTERM)
+	signal.Notify(sigterm, syscall.SIGINT)
+	if !dumpMode {
+		<-sigterm
+	}
+
+	obsv.Stop()
+	repo.Stop()
+	reco.Stop()
+	http.Stop()
+
+	return nil
+}
 
 // Execute adds all child commands to the root command and sets their flags.
 func Execute() error {

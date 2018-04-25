@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bpineau/katafygio/config"
 	"github.com/bpineau/katafygio/pkg/event"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,25 +36,44 @@ type Interface interface {
 	Stop()
 }
 
+type logger interface {
+	Infof(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+}
+
 // Factory generate controllers
-type Factory struct{}
+type Factory struct {
+	logger     logger
+	filter     string
+	resyncIntv time.Duration
+	excluded   []string
+}
 
 // Controller is a generic kubernetes controller
 type Controller struct {
-	name     string
-	stopCh   chan struct{}
-	doneCh   chan struct{}
-	syncCh   chan struct{}
-	notifier event.Notifier
-	config   *config.KfConfig
-	queue    workqueue.RateLimitingInterface
-	informer cache.SharedIndexInformer
+	name       string
+	stopCh     chan struct{}
+	doneCh     chan struct{}
+	syncCh     chan struct{}
+	notifier   event.Notifier
+	queue      workqueue.RateLimitingInterface
+	informer   cache.SharedIndexInformer
+	logger     logger
+	resyncIntv time.Duration
+	excluded   []string
 }
 
 // New return a kubernetes controller using the provided client
-func New(client cache.ListerWatcher, notifier event.Notifier, name string, config *config.KfConfig) *Controller {
+func New(client cache.ListerWatcher,
+	notifier event.Notifier,
+	log logger,
+	name string,
+	filter string,
+	resync time.Duration,
+	excluded []string,
+) *Controller {
 
-	selector := metav1.ListOptions{LabelSelector: config.Filter}
+	selector := metav1.ListOptions{LabelSelector: filter}
 	lw := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 			return client.List(selector)
@@ -68,7 +86,7 @@ func New(client cache.ListerWatcher, notifier event.Notifier, name string, confi
 	informer := cache.NewSharedIndexInformer(
 		lw,
 		&unstructured.Unstructured{},
-		config.ResyncIntv,
+		resync,
 		cache.Indexers{},
 	)
 
@@ -96,20 +114,22 @@ func New(client cache.ListerWatcher, notifier event.Notifier, name string, confi
 	})
 
 	return &Controller{
-		stopCh:   make(chan struct{}),
-		doneCh:   make(chan struct{}),
-		syncCh:   make(chan struct{}, 1),
-		notifier: notifier,
-		name:     name,
-		config:   config,
-		queue:    queue,
-		informer: informer,
+		stopCh:     make(chan struct{}),
+		doneCh:     make(chan struct{}),
+		syncCh:     make(chan struct{}, 1),
+		notifier:   notifier,
+		name:       name,
+		queue:      queue,
+		informer:   informer,
+		logger:     log,
+		resyncIntv: resync,
+		excluded:   excluded,
 	}
 }
 
 // Start launchs the controller in the background
 func (c *Controller) Start() {
-	c.config.Logger.Infof("Starting %s controller", c.name)
+	c.logger.Infof("Starting %s controller", c.name)
 	defer utilruntime.HandleCrash()
 
 	go c.informer.Run(c.stopCh)
@@ -126,7 +146,7 @@ func (c *Controller) Start() {
 
 // Stop halts the controller
 func (c *Controller) Stop() {
-	c.config.Logger.Infof("Stopping %s controller", c.name)
+	c.logger.Infof("Stopping %s controller", c.name)
 	<-c.syncCh
 	close(c.stopCh)
 	c.queue.ShutDown()
@@ -148,7 +168,7 @@ func (c *Controller) processNextItem() bool {
 	defer c.queue.Done(key)
 
 	if strings.Compare(key.(string), canaryKey) == 0 {
-		c.config.Logger.Infof("Initial sync completed for %s controller", c.name)
+		c.logger.Infof("Initial sync completed for %s controller", c.name)
 		c.syncCh <- struct{}{}
 		c.queue.Forget(key)
 		return true
@@ -160,11 +180,11 @@ func (c *Controller) processNextItem() bool {
 		// No error, reset the ratelimit counters
 		c.queue.Forget(key)
 	} else if c.queue.NumRequeues(key) < maxProcessRetry {
-		c.config.Logger.Errorf("Error processing %s (will retry): %v", key, err)
+		c.logger.Errorf("Error processing %s (will retry): %v", key, err)
 		c.queue.AddRateLimited(key)
 	} else {
 		// err != nil and too many retries
-		c.config.Logger.Errorf("Error processing %s (giving up): %v", key, err)
+		c.logger.Errorf("Error processing %s (giving up): %v", key, err)
 		c.queue.Forget(key)
 	}
 
@@ -178,7 +198,7 @@ func (c *Controller) processItem(key string) error {
 		return fmt.Errorf("error fetching %s from store: %v", key, err)
 	}
 
-	for _, obj := range c.config.ExcludeObject {
+	for _, obj := range c.excluded {
 		if strings.Compare(strings.ToLower(obj), strings.ToLower(c.name+":"+key)) == 0 {
 			return nil
 		}
@@ -200,8 +220,6 @@ func (c *Controller) processItem(key string) error {
 		delete(md, attr)
 	}
 
-	c.config.Logger.Debugf("Found %s/%s [%s]", obj.GetAPIVersion(), obj.GetKind(), key)
-
 	yml, err := yaml.Marshal(obj)
 	if err != nil {
 		return fmt.Errorf("failed to marshal %s: %v", key, err)
@@ -215,7 +233,17 @@ func (c *Controller) enqueue(notif *event.Notification) {
 	c.notifier.Send(notif)
 }
 
+// NewFactory create a controller factory
+func NewFactory(logger logger, filter string, resync int, excluded []string) *Factory {
+	return &Factory{
+		logger:     logger,
+		filter:     filter,
+		resyncIntv: time.Duration(resync) * time.Second,
+		excluded:   excluded,
+	}
+}
+
 // NewController create a controller.Controller
-func (f *Factory) NewController(client cache.ListerWatcher, notifier event.Notifier, name string, config *config.KfConfig) Interface {
-	return New(client, notifier, name, config)
+func (f *Factory) NewController(client cache.ListerWatcher, notifier event.Notifier, name string) Interface {
+	return New(client, notifier, f.logger, name, f.filter, f.resyncIntv, f.excluded)
 }
