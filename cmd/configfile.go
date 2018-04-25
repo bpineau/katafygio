@@ -30,7 +30,7 @@ func loadConfigFile() {
 	viper.SetEnvKeyReplacer(replacer)
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err == nil {
-		RootCmd.Printf("Using config file: %s", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		RootCmd.Printf("Can't read config file: %v\n", err)
 	}
 }

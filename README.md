@@ -86,6 +86,7 @@ in uppercase, prefixed by "KF", and with underscore instead of dashs. ie.:
 ```
 export KF_GIT_URL=https://user:token@github.com/myorg/myrepos.git
 export KF_LOCAL_DIR=/tmp/kfdump
+export KF_LOG_LEVEL=info
 
 # exception, for kubectl compatibility:
 export KUBECONFIG=/tmp/kconfig

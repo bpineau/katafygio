@@ -54,13 +54,13 @@ func init() {
 	bindPFlag("dump-only", "dump-only")
 
 	RootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "v", "info", "Log level")
-	bindPFlag("log.level", "log-level")
+	bindPFlag("log-level", "log-level")
 
 	RootCmd.PersistentFlags().StringVarP(&logOutput, "log-output", "o", "stderr", "Log output")
-	bindPFlag("log.output", "log-output")
+	bindPFlag("log-output", "log-output")
 
 	RootCmd.PersistentFlags().StringVarP(&logServer, "log-server", "r", "", "Log server (if using syslog)")
-	bindPFlag("log.server", "log-server")
+	bindPFlag("log-server", "log-server")
 
 	RootCmd.PersistentFlags().StringVarP(&localDir, "local-dir", "e", "./kubernetes-backup", "Where to dump yaml files")
 	bindPFlag("local-dir", "local-dir")
@@ -90,9 +90,9 @@ func bindConf(cmd *cobra.Command, args []string) {
 	kubeConf = viper.GetString("kube-config")
 	dryRun = viper.GetBool("dry-run")
 	dumpMode = viper.GetBool("dump-only")
-	logLevel = viper.GetString("log.level")
-	logOutput = viper.GetString("log.output")
-	logServer = viper.GetString("log.server")
+	logLevel = viper.GetString("log-level")
+	logOutput = viper.GetString("log-output")
+	logServer = viper.GetString("log-server")
 	filter = viper.GetString("filter")
 	localDir = viper.GetString("local-dir")
 	gitURL = viper.GetString("git-url")
