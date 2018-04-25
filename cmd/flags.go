@@ -20,7 +20,7 @@ var (
 	localDir  string
 	gitURL    string
 	healthP   int
-	resync    int
+	resyncInt int
 	exclkind  []string
 	exclobj   []string
 )
@@ -80,6 +80,24 @@ func init() {
 	RootCmd.PersistentFlags().IntVarP(&healthP, "healthcheck-port", "p", 0, "Port for answering healthchecks on /health url")
 	bindPFlag("healthcheck-port", "healthcheck-port")
 
-	RootCmd.PersistentFlags().IntVarP(&resync, "resync-interval", "i", 900, "Full resync interval in seconds (0 to disable)")
+	RootCmd.PersistentFlags().IntVarP(&resyncInt, "resync-interval", "i", 900, "Full resync interval in seconds (0 to disable)")
 	bindPFlag("resync-interval", "resync-interval")
+}
+
+// for whatever the reason, viper don't auto bind values from config file so we have to tell him
+func bindConf(cmd *cobra.Command, args []string) {
+	apiServer = viper.GetString("api-server")
+	kubeConf = viper.GetString("kube-config")
+	dryRun = viper.GetBool("dry-run")
+	dumpMode = viper.GetBool("dump-only")
+	logLevel = viper.GetString("log.level")
+	logOutput = viper.GetString("log.output")
+	logServer = viper.GetString("log.server")
+	filter = viper.GetString("filter")
+	localDir = viper.GetString("local-dir")
+	gitURL = viper.GetString("git-url")
+	healthP = viper.GetInt("healthcheck-port")
+	resyncInt = viper.GetInt("resync-interval")
+	exclkind = viper.GetStringSlice("exclude-kind")
+	exclobj = viper.GetStringSlice("exclude-object")
 }
