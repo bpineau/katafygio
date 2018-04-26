@@ -73,7 +73,7 @@ func New(client cache.ListerWatcher,
 	excluded []string,
 ) *Controller {
 
-	selector := metav1.ListOptions{LabelSelector: filter}
+	selector := metav1.ListOptions{LabelSelector: filter, ResourceVersion: "0"}
 	lw := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 			return client.List(selector)

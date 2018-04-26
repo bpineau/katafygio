@@ -67,7 +67,39 @@ var (
 			"metadata": map[string]interface{}{
 				"name":            "Bar3",
 				"namespace":       "ns3",
-				"resourceVersion": 1,
+				"resourceVersion": "1",
+				"uid":             "00000000-0000-0000-0000-000000000042",
+				"selfLink":        "shouldnotbethere",
+			},
+			"status": "shouldnotbethere",
+		},
+	}
+
+	obj4 = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Foo2",
+			"metadata": map[string]interface{}{
+				"name":            "Bar4",
+				"namespace":       "ns4",
+				"resourceVersion": "2",
+				"foo":             "canary-bar4",
+				"uid":             "00000000-0000-0000-0000-000000000042",
+				"selfLink":        "shouldnotbethere",
+			},
+			"status": "shouldnotbethere",
+		},
+	}
+
+	obj5 = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Foo2",
+			"metadata": map[string]interface{}{
+				"name":            "Bar4",
+				"namespace":       "ns4",
+				"ResourceVersion": "4",
+				"foo":             "canary-bar5",
 				"uid":             "00000000-0000-0000-0000-000000000042",
 				"selfLink":        "shouldnotbethere",
 			},
@@ -95,6 +127,8 @@ func TestController(t *testing.T) {
 
 	client.Add(obj2)
 	client.Add(obj3)
+	client.Add(obj4)
+	client.Modify(obj5)
 
 	ctrl.Start()
 	// wait until queue is drained
@@ -122,6 +156,11 @@ func TestController(t *testing.T) {
 		// ensure objet filter works as expected
 		if strings.Compare(ev.Key, "ns3/Bar3") == 0 {
 			t.Error("execludedobject filter failed")
+		}
+
+		// ensure updates propagate
+		if strings.Contains(string(ev.Object), "canary-bar4") {
+			t.Error("update didn't propagate")
 		}
 	}
 
