@@ -4,14 +4,16 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/test"
-
-	"github.com/bpineau/katafygio/pkg/log"
 )
 
-var logs = log.New("error", "", "test")
+type mockLog struct {
+	count int
+}
+
+func (m *mockLog) Infof(format string, args ...interface{})  {}
+func (m *mockLog) Errorf(format string, args ...interface{}) { m.count++ }
+
+var logs = new(mockLog)
 
 func TestNoopHealth(t *testing.T) {
 
@@ -23,8 +25,7 @@ func TestNoopHealth(t *testing.T) {
 	hc = New(logs, -42)
 	_ = hc.Start()
 	hc.Stop()
-	hook := logs.Hooks[logrus.InfoLevel][0].(*test.Hook)
-	if len(hook.Entries) != 1 {
+	if logs.count != 1 {
 		t.Error("Failed to log an issue with a bogus port")
 	}
 }

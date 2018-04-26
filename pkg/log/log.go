@@ -2,25 +2,33 @@
 package log
 
 import (
-	"io"
-	"io/ioutil"
-	"os"
-
-	"log/syslog"
+	"fmt"
 
 	"github.com/sirupsen/logrus"
-	ls "github.com/sirupsen/logrus/hooks/syslog"
-	"github.com/sirupsen/logrus/hooks/test"
+)
+
+const (
+	outputStdout = "stdout"
+	outputStderr = "stderr"
+	outputTest   = "test"
+	outputSyslog = "syslog"
 )
 
 // New initialize logrus and return a new logger.
-func New(logLevel string, logServer string, logOutput string) *logrus.Logger {
-	level, err := logrus.ParseLevel(logLevel)
-	if err != nil {
-		level = logrus.InfoLevel
+func New(logLevel string, logServer string, logOutput string) (*logrus.Logger, error) {
+	if logLevel == "" {
+		logLevel = "info"
 	}
 
-	output, hook := getOutput(logServer, logOutput)
+	level, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		return nil, err
+	}
+
+	output, hook, err := getOutput(logServer, logOutput)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init logger: %v", err)
+	}
 
 	formatter := &logrus.TextFormatter{
 		FullTimestamp:   true,
@@ -34,38 +42,9 @@ func New(logLevel string, logServer string, logOutput string) *logrus.Logger {
 		Level:     level,
 	}
 
-	if logOutput == "syslog" || logOutput == "test" {
+	if logOutput == outputSyslog || logOutput == outputTest {
 		log.Hooks.Add(hook)
 	}
 
-	return log
-}
-
-func getOutput(logServer string, logOutput string) (io.Writer, logrus.Hook) {
-	var output io.Writer
-	var hook logrus.Hook
-	var err error
-
-	switch logOutput {
-	case "stdout":
-		output = os.Stdout
-	case "stderr":
-		output = os.Stderr
-	case "test":
-		output = ioutil.Discard
-		_, hook = test.NewNullLogger()
-	case "syslog":
-		output = os.Stderr // does not matter ?
-		if logServer == "" {
-			panic("syslog output needs a log server (ie. 127.0.0.1:514)")
-		}
-		hook, err = ls.NewSyslogHook("udp", logServer, syslog.LOG_INFO, "katafygio")
-		if err != nil {
-			panic(err)
-		}
-	default:
-		output = os.Stderr
-	}
-
-	return output, hook
+	return log, nil
 }

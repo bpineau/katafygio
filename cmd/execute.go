@@ -35,7 +35,10 @@ var (
 )
 
 func runE(cmd *cobra.Command, args []string) (err error) {
-	logger := log.New(logLevel, logServer, logOutput)
+	logger, err := log.New(logLevel, logServer, logOutput)
+	if err != nil {
+		return fmt.Errorf("failed to create a logger: %v", err)
+	}
 
 	if restcfg == nil {
 		restcfg, err = client.New(apiServer, kubeConf)

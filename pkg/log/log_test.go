@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -21,7 +22,10 @@ var (
 )
 
 func TestLog(t *testing.T) {
-	logger := New("warning", "", "test")
+	logger, err := New("warning", "", "test")
+	if err != nil {
+		t.Errorf("Creating a new test logger shouldn't fail: %v", err)
+	}
 
 	logger.Info("Changed: foo")
 	logger.Warn("Changed: bar")
@@ -37,55 +41,59 @@ func TestLog(t *testing.T) {
 		t.Errorf("Unexpected log entry: %s", hook.LastEntry().Message)
 	}
 
-	logger = New("", "", "test")
-	if logger.Level != logrus.InfoLevel {
-		t.Error("The default loglevel should be info")
-	}
-
-	logger = New("", "", "")
-	if logger.Out != os.Stderr {
-		t.Error("The default output should be stderr")
-	}
-
-	logger = New("info", "127.0.0.1:514", "syslog")
-	if fmt.Sprintf("%T", logger) != "*logrus.Logger" {
-		t.Error("Failed to instantiate a syslog logger")
-	}
-
-	logger = New("info", "", "stdout")
-	if fmt.Sprintf("%T", logger) != "*logrus.Logger" {
-		t.Error("Failed to instantiate a stdout logger")
-	}
-
-	logger = New("info", "", "stderr")
-	if fmt.Sprintf("%T", logger) != "*logrus.Logger" {
-		t.Error("Failed to instantiate a stderr logger")
-	}
-
 	for _, level := range levels {
-		lg := New(level, "", "test")
-		if fmt.Sprintf("%T", lg) != "*logrus.Logger" {
-			t.Errorf("Failed to instantiate at %s level", level)
+		lg, err2 := New(level, "", "test")
+		if err2 != nil || fmt.Sprintf("%T", lg) != "*logrus.Logger" {
+			t.Errorf("Failed to instantiate at %s level: %v", level, err2)
 		}
+	}
+
+	logger, err = New("", "", "test")
+	if err != nil || logger.Level != logrus.InfoLevel {
+		t.Errorf("The default loglevel should be info %v", err)
+	}
+
+	logger, err = New("", "", "")
+	if err != nil || logger.Out != os.Stderr {
+		t.Errorf("The default output should be stderr %v", err)
+	}
+
+	if runtime.GOOS != "windows" {
+		logger, err = New("info", "127.0.0.1:514", "syslog")
+		if err != nil || fmt.Sprintf("%T", logger) != "*logrus.Logger" {
+			t.Errorf("Failed to instantiate a syslog logger %v", err)
+		}
+	}
+
+	logger, err = New("info", "", "stdout")
+	if err != nil || fmt.Sprintf("%T", logger) != "*logrus.Logger" {
+		t.Errorf("Failed to instantiate a stdout logger %v", err)
+	}
+
+	logger, err = New("info", "", "stderr")
+	if err != nil || fmt.Sprintf("%T", logger) != "*logrus.Logger" {
+		t.Errorf("Failed to instantiate a stderr logger %v", err)
 	}
 }
 
 func TestSyslogMissingArg(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("syslog logger should panic without a server")
-		}
-	}()
+	if runtime.GOOS == "windows" {
+		t.Skip("syslog is not supported on Windows")
+	}
 
-	_ = New("info", "", "syslog")
+	_, err := New("info", "", "syslog")
+	if err == nil {
+		t.Errorf("syslog logger should fail without a server")
+	}
 }
 
 func TestSyslogWrongArg(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("syslog logger should panic on wrong server address")
-		}
-	}()
+	if runtime.GOOS == "windows" {
+		t.Skip("syslog is not supported on Windows")
+	}
 
-	_ = New("info", "wrong server", "syslog")
+	_, err := New("info", "wrong server", "syslog")
+	if err == nil {
+		t.Errorf("syslog logger should fail with a broken server address")
+	}
 }
