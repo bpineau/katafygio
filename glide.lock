@@ -1,5 +1,5 @@
-hash: fe585d19af780526ed9b11ed48a3e8cc0b4c5d9c2215e9de96fba41e4b737b1a
-updated: 2018-04-20T09:13:34.227355313+02:00
+hash: 85fb9b93c599b685eb50ce97bcca3b96550ec5b7b674e14c2c64f2c2420d5707
+updated: 2018-04-27T21:16:03.197585354+02:00
 imports:
 - name: cloud.google.com/go
   version: 20d4028b8a750c2aca76bf9fefa8ed2d0109b573
@@ -12,6 +12,10 @@ imports:
   - autorest/adal
   - autorest/azure
   - autorest/date
+- name: github.com/cpuguy83/go-md2man
+  version: 48d8747a2ca13185e7cc8efe6e9fc196a83f71a5
+  subpackages:
+  - md2man
 - name: github.com/davecgh/go-spew
   version: 8991bc29aa16c548c550c7ff78260e27b9ab7c73
   subpackages:
@@ -46,7 +50,7 @@ imports:
   - compiler
   - extensions
 - name: github.com/gophercloud/gophercloud
-  version: c38d3807cb5863eb95a857d694f6a4d6b31cde32
+  version: fc1122caa2de7bcd7d189719873fe5f2b9156a75
   subpackages:
   - openstack
   - openstack/identity/v2/tenants
@@ -88,6 +92,10 @@ imports:
   version: 05fbef0ca5da472bbf96c9322b84a53edc03c9fd
 - name: github.com/pelletier/go-toml
   version: 66540cf1fcd2c3aee6f6787dfa32a6ae9a870f12
+- name: github.com/russross/blackfriday
+  version: 6aeb241ce2c0d259208d56810fc8831a46df5660
+- name: github.com/shurcooL/sanitized_anchor_name
+  version: 86672fcb3f950f35f2e675df2240550f2a50762f
 - name: github.com/sirupsen/logrus
   version: c155da19408a8799da419ed3eeb0cb5db0ad5dbc
   subpackages:
@@ -101,6 +109,8 @@ imports:
   version: 8965335b8c7107321228e3e3702cab9832751bac
 - name: github.com/spf13/cobra
   version: a1f051bc3eba734da4772d60e2d677f47cf93ef4
+  subpackages:
+  - doc
 - name: github.com/spf13/jwalterweatherman
   version: 7c0cea34c8ece3fbeb2b27ab9b59511d360fb394
 - name: github.com/spf13/pflag

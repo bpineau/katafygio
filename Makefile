@@ -28,6 +28,9 @@ lint:
 		--enable=goimports \
 		./...
 
+man:
+	go run assets/manpage.go
+
 fmt:
 	go fmt ./...
 
