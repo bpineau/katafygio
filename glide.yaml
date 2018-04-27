@@ -41,3 +41,5 @@ import:
   version: ^1.1.0
 - package: github.com/Azure/go-autorest
   version: v9.10.0
+- package: github.com/russross/blackfriday
+  version: ~2.0.0

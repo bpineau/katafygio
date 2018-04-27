@@ -12,6 +12,8 @@ builds:
       - arm
       - arm64
       - "386"
+    hooks:
+      post: make man
 
 release:
   # don't autopublish
@@ -52,6 +54,8 @@ nfpm:
     - git
   config_files:
     "./assets/katafygio.yaml": "/etc/katafygio/katafygio.yaml"
+  files:
+    "./katafygio.8.gz": "/usr/share/man/man8/katafygio.8.gz"
   overrides:
     rpm:
       replacements:
