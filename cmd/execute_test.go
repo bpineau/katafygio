@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/spf13/afero"
 	"k8s.io/client-go/rest"
 )
 
@@ -15,6 +16,7 @@ func (m *mockClient) GetRestConfig() *rest.Config {
 
 func TestRootCmd(t *testing.T) {
 	restcfg = new(mockClient)
+	appFs = afero.NewMemMapFs()
 	RootCmd.SetOutput(new(bytes.Buffer))
 	RootCmd.SetArgs([]string{
 		"--config",
