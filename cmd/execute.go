@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 
 	"github.com/bpineau/katafygio/pkg/client"
@@ -22,6 +24,7 @@ const appName = "katafygio"
 
 var (
 	restcfg client.Interface
+	appFs   = afero.NewOsFs()
 
 	// RootCmd is our main entry point, launching runE()
 	RootCmd = &cobra.Command{
@@ -45,6 +48,11 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 		if err != nil {
 			return fmt.Errorf("failed to create a client: %v", err)
 		}
+	}
+
+	err = appFs.MkdirAll(filepath.Clean(localDir), 0700)
+	if err != nil {
+		return fmt.Errorf("Can't create directory %s: %v", localDir, err)
 	}
 
 	repo, err := git.New(logger, dryRun, localDir, gitURL).Start()

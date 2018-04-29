@@ -62,10 +62,6 @@ func New(log logger, events event.Notifier, localDir string, gcInterval int, dry
 // Start continuously receive events and saves them to disk as files
 func (w *Listener) Start() *Listener {
 	w.logger.Infof("Starting event recorder")
-	err := appFs.MkdirAll(filepath.Clean(w.localDir), 0700)
-	if err != nil {
-		panic(fmt.Sprintf("Can't create directory %s: %v", w.localDir, err))
-	}
 
 	go func() {
 		evCh := w.events.ReadChan()
