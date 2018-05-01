@@ -23,6 +23,7 @@ var (
 	resyncInt int
 	exclkind  []string
 	exclobj   []string
+	noGit     bool
 )
 
 func bindPFlag(key string, cmd string) {
@@ -82,6 +83,9 @@ func init() {
 
 	RootCmd.PersistentFlags().IntVarP(&resyncInt, "resync-interval", "i", 900, "Full resync interval in seconds (0 to disable)")
 	bindPFlag("resync-interval", "resync-interval")
+
+	RootCmd.PersistentFlags().BoolVarP(&noGit, "no-git", "n", false, "Don't version with git")
+	bindPFlag("no-git", "no-git")
 }
 
 // for whatever the reason, viper don't auto bind values from config file so we have to tell him
@@ -100,4 +104,5 @@ func bindConf(cmd *cobra.Command, args []string) {
 	resyncInt = viper.GetInt("resync-interval")
 	exclkind = viper.GetStringSlice("exclude-kind")
 	exclobj = viper.GetStringSlice("exclude-object")
+	noGit = viper.GetBool("no-git")
 }

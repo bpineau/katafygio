@@ -12,7 +12,7 @@ This provides real time, continuous backups, and keeps detailled changes history
 
 To dump the cluster content once and exit:
 ```bash
-katafygio --dump-only --local-dir /tmp/clusterdump/
+katafygio --no-git --dump-only --local-dir /tmp/clusterdump/
 ```
 
 To create a local git repository and continuously save the cluster content:
@@ -73,6 +73,7 @@ Flags:
   -v, --log-level string         Log level (default "info")
   -o, --log-output string        Log output (default "stderr")
   -r, --log-server string        Log server (if using syslog)
+  -n, --no-git                   Don't version with git
   -i, --resync-interval int      Full resync interval in seconds (0 to disable) (default 900)
 ```
 

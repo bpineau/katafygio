@@ -55,7 +55,10 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 		return fmt.Errorf("Can't create directory %s: %v", localDir, err)
 	}
 
-	repo, err := git.New(logger, dryRun, localDir, gitURL).Start()
+	var repo *git.Store
+	if !noGit {
+		repo, err = git.New(logger, dryRun, localDir, gitURL).Start()
+	}
 	if err != nil {
 		return fmt.Errorf("failed to start git repo handler: %v", err)
 	}
@@ -74,9 +77,11 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	obsv.Stop()
-	repo.Stop()
 	reco.Stop()
 	http.Stop()
+	if !noGit {
+		repo.Stop()
+	}
 
 	return nil
 }
