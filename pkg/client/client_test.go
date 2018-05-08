@@ -31,6 +31,7 @@ func TestClientSet(t *testing.T) {
 
 	_ = os.Unsetenv("KUBERNETES_SERVICE_HOST")
 	_ = os.Setenv("HOME", nonExistentPath)
+	_ = os.Setenv("KUBECONFIG", nonExistentPath)
 	_, err = New("", "")
 	if err == nil {
 		t.Fatal("New() should fail to load InClusterConfig without kube address env")

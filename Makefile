@@ -50,6 +50,10 @@ clean:
 coverall:
 	goveralls -coverprofile=profile.cov -service=travis-ci -package github.com/bpineau/katafygio/pkg/...
 
+e2e:
+	kubectl get ns >/dev/null || exit 1
+	go test -count=1 -v assets/e2e_test.go
+
 test:
 	go test -i github.com/bpineau/katafygio/...
 	go test -race -cover -coverprofile=profile.cov github.com/bpineau/katafygio/...
