@@ -93,16 +93,24 @@ export KF_LOG_LEVEL=info
 export KUBECONFIG=/tmp/kconfig
 ```
 
-## Build
+## Installation
 
-Assuming you have go 1.10 and glide in the path, and GOPATH configured:
+You can find pre-built binaries in the [releases](https://github.com/bpineau/katafygio/releases) page,
+ready to run on your desktop or in a cluster.
+
+We also provide a [docker image](https://hub.docker.com/r/bpineau/katafygio/).
+
+You can also deploy with the provided [helm](https://helm.sh/) chart:
+```shell
+helm install --name kf-backups --namespace kube-system assets/helm-chart/katafygio/
+```
+
+If you want to build from sources, assuming you have go 1.10 and glide in the path, and GOPATH configured:
 
 ```shell
 make deps
 make build
 ```
-
-You can also use pre-build binaries from the [releases](https://github.com/bpineau/katafygio/releases) page, or the [docker image](https://hub.docker.com/r/bpineau/katafygio/).
 
 ## See Also
 

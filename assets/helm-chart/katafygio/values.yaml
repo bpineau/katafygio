@@ -1,0 +1,65 @@
+
+# Where we'll dump cluster objects
+localDir: "/tmp/kf-dump"
+
+# The port we'll listen for health checks requests
+healthcheckPort: 8080
+
+# Frequency (in seconds) between full catch-up resyncs. 0 to disable.
+resyncInterval: 300
+
+# Logging. Output may be: stdout, stderr, syslog.
+logLevel: warning
+logOutput: stdout
+
+# Optional repository where Katafygio would push local changes
+#gitUrl: https://user:token@github.com/myorg/myrepos.git
+
+# Optional label selector to match only certain objects
+#filter: "app in (foo, bar)"
+
+# Optional. Address of a remote syslog server (if logOutput is "syslog").
+# logServer: "localhost:514"
+
+# Kubernetes object kinds to exclude from the dumps
+excludeKind:
+  - replicaset
+  - endpoints
+  - event
+
+# Specific Kubernetes objets to exclude from the dumps
+# excludeObject:
+#  - "configmap:kube-system/leader-elector"
+
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+  apiVersion: v1beta1
+
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created
+  create: true
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: 
+
+image:
+  repository: bpineau/katafygio
+  tag: v0.5.0
+  pullPolicy: IfNotPresent
+
+resources: {}
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+replicaCount: 1
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
