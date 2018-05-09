@@ -1,0 +1,87 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "katafygio.fullname" . }}
+  labels:
+    app: {{ template "katafygio.name" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "katafygio.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "katafygio.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "katafygio.serviceAccountName" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /usr/bin/katafygio
+            - --local-dir={{ default "/tmp/kf-dump" .Values.localDir }}
+            - --healthcheck-port={{ default 8080 .Values.healthcheckPort }}
+          {{- if .Values.gitUrl }}
+            - --git-url={{ .Values.gitUrl }}
+          {{- end }}
+          {{- if .Values.filter }}
+            - --filter={{ .Values.filter }}
+          {{- end }}
+          {{- if .Values.logLevel }}
+            - --log-level={{ .Values.logLevel }}
+          {{- end }}
+          {{- if .Values.logOutput }}
+            - --log-output={{ .Values.logOutput }}
+          {{- end }}
+          {{- if .Values.logServer }}
+            - --log-server={{ .Values.logServer }}
+          {{- end }}
+          {{- if .Values.resyncInterval }}
+            - --resync-interval={{ .Values.resyncInterval }}
+          {{- end }}
+          {{- if .Values.noGit }}
+            - --no-git
+          {{- end }}
+          {{- if .Values.excludeKind }}
+            {{- range .Values.excludeKind }}
+            - --exclude-kind={{ . }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.excludeObject }}
+            {{- range .Values.excludeObject }}
+            - --exclude-object={{ . }}
+            {{- end }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ default 8080 .Values.healthcheckPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}

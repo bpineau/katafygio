@@ -1,0 +1,12 @@
+apiVersion: v1
+appVersion: 0.5.0
+description: Continuously backup Kubernetes objets as yaml files in git
+name: katafygio
+home: https://github.com/bpineau/katafygio
+sources:
+- https://github.com/bpineau/katafygio
+version: 0.2.0
+maintainers:
+- name: bpineau
+  email: ben.pineau@gmail.com
+engine: gotpl

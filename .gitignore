@@ -6,6 +6,5 @@
 /vendor/
 kubernetes-backup
 dist/*
-katafygio
 profile.cov
 katafygio.8.gz
