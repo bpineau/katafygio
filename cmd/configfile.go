@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"log"
 	"os"
 	"strings"
 
@@ -31,6 +32,9 @@ func loadConfigFile() {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		RootCmd.Printf("Can't read config file: %v\n", err)
+		_, ok := err.(viper.ConfigParseError)
+		if ok {
+			log.Fatalf("Can't read config file: %v\n", err)
+		}
 	}
 }
