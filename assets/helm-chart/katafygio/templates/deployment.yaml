@@ -3,10 +3,7 @@ kind: Deployment
 metadata:
   name: {{ template "katafygio.fullname" . }}
   labels:
-    app: {{ template "katafygio.name" . }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+{{ include "katafygio.labels.standard" . | indent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -16,8 +13,7 @@ spec:
   template:
     metadata:
       labels:
-        app: {{ template "katafygio.name" . }}
-        release: {{ .Release.Name }}
+{{ include "katafygio.labels.standard" . | indent 8 }}
     spec:
       serviceAccountName: {{ template "katafygio.serviceAccountName" . }}
       containers:
@@ -26,8 +22,8 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
             - /usr/bin/katafygio
-            - --local-dir={{ default "/tmp/kf-dump" .Values.localDir }}
-            - --healthcheck-port={{ default 8080 .Values.healthcheckPort }}
+            - --local-dir={{ .Values.localDir }}
+            - --healthcheck-port={{ .Values.healthcheckPort }}
           {{- if .Values.gitUrl }}
             - --git-url={{ .Values.gitUrl }}
           {{- end }}
@@ -61,7 +57,7 @@ spec:
           {{- end }}
           ports:
             - name: http
-              containerPort: {{ default 8080 .Values.healthcheckPort }}
+              containerPort: {{ .Values.healthcheckPort }}
               protocol: TCP
           livenessProbe:
             httpGet:
