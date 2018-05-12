@@ -1,8 +1,11 @@
+# Default values for the katafygio chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
 
-# Where we'll dump cluster objects
+# Where we'll dump and commit cluster objects before pushing them to a remote git repository.
 localDir: "/tmp/kf-dump"
 
-# The port we'll listen for health checks requests
+# The port we'll listen for health checks requests.
 healthcheckPort: 8080
 
 # Frequency (in seconds) between full catch-up resyncs. 0 to disable.
@@ -12,29 +15,33 @@ resyncInterval: 300
 logLevel: warning
 logOutput: stdout
 
-# Optional repository where Katafygio would push local changes
+# Optional. Repository where Katafygio would push changes.
 #gitUrl: https://user:token@github.com/myorg/myrepos.git
 
-# Optional label selector to match only certain objects
+# Set to true to disable git versioning.
+noGit: false
+
+# Optional. Label selector to restrict dump to certain objets.
 #filter: "app in (foo, bar)"
 
 # Optional. Address of a remote syslog server (if logOutput is "syslog").
 # logServer: "localhost:514"
 
-# Kubernetes object kinds to exclude from the dumps
+# Optional. Kubernetes object kinds we want to exclude from the dumps.
 excludeKind:
   - replicaset
   - endpoints
   - event
 
-# Specific Kubernetes objets to exclude from the dumps
+# Optional. Specific Kubernetes objets to exclude from the dumps.
 # excludeObject:
 #  - "configmap:kube-system/leader-elector"
 
+# Katafygio needs read-only access to all Kubernetes API groups and resources.
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
-  apiVersion: v1beta1
+  apiVersion: v1
 
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
