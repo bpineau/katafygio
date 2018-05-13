@@ -25,6 +25,7 @@ func TestRootCmd(t *testing.T) {
 		"/dev/null",
 		"--dry-run",
 		"--dump-only",
+		"--no-git",
 		"--api-server",
 		"http://192.0.2.1", // RFC 5737 reserved/unroutable
 		"--log-level",
