@@ -157,7 +157,7 @@ func (w *Listener) save(file string, data []byte) error {
 		return fmt.Errorf("can't create local directory %s: %v", dir, err)
 	}
 
-	tmpf, err := afero.TempFile(appFs, "", "katafygio")
+	tmpf, err := afero.TempFile(appFs, dir, ".temp-katafygio-")
 	if err != nil {
 		return fmt.Errorf("failed to create a temporary file: %v", err)
 	}
