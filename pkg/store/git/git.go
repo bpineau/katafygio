@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/afero"
@@ -145,6 +146,11 @@ func (s *Store) Status() (changed bool, err error) {
 // CloneOrInit create a new local repository, either with "git clone" (if a GitURL
 // to clone from is provided), or "git init" (in the absence of GitURL).
 func (s *Store) CloneOrInit() (err error) {
+	s.LocalDir, err = filepath.Abs(s.LocalDir)
+	if err != nil {
+		return fmt.Errorf("can't find local dir absolute path (broken cwd?): %v", err)
+	}
+
 	if !s.DryRun {
 		err = appFs.MkdirAll(s.LocalDir, 0700)
 		if err != nil {

@@ -100,6 +100,11 @@ ready to run on your desktop or in a cluster.
 
 We also provide a [docker image](https://hub.docker.com/r/bpineau/katafygio/).
 
+On MacOs, you can use the brew formula:
+```bash
+brew install bpineau/tap/katafygio
+```
+
 You can also deploy with the provided [helm](https://helm.sh/) chart:
 ```shell
 helm install --name kf-backups --namespace kube-system assets/helm-chart/katafygio/
