@@ -3,7 +3,7 @@ package cmd
 import "github.com/spf13/cobra"
 
 var (
-	version = "0.7.0"
+	version = "0.7.1"
 
 	versionCmd = &cobra.Command{
 		Use:   "version",
