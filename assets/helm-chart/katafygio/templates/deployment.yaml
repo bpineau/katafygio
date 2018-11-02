@@ -20,8 +20,7 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command:
-            - /usr/bin/katafygio
+          args:
             - --local-dir={{ .Values.localDir }}
             - --healthcheck-port={{ .Values.healthcheckPort }}
           {{- if .Values.gitUrl }}
@@ -67,8 +66,21 @@ spec:
             httpGet:
               path: /health
               port: http
+          {{- if and .Values.gitSshKey .Values.gitUrl }}
+          volumeMounts:
+            - name: katafygio-gitssh
+              mountPath: "/gitssh-secret"
+              readOnly: true
+          {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
+      {{- if and .Values.gitSshKey .Values.gitUrl }}
+      volumes:
+        - name: katafygio-gitssh
+          secret:
+            secretName: {{ template "katafygio.fullname" . }}
+            defaultMode: 256
+      {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}

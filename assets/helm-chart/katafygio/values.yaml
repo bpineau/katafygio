@@ -10,6 +10,15 @@
 # noGit disable git versioning when true (will only keep an unversioned local dump up-to-date).
 noGit: false
 
+# gitSshKey (optional) is a private ssh key to access git repository
+gitSshKey: ""
+
+# gitSshConfig (optional) is the default ssh client configuration
+gitSshConfig: |
+  Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+
 # healthcheckPort is the TCP port Katafygio will listen for health check requests.
 healthcheckPort: 8080
 
@@ -74,7 +83,7 @@ serviceAccount:
 
 image:
   repository: bpineau/katafygio
-  tag: v0.7.1
+  tag: v0.7.2
   pullPolicy: IfNotPresent
 
 # resources define the deployment's cpu and memory resources.
