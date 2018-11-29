@@ -15,6 +15,8 @@ spec:
       labels:
 {{ include "katafygio.labels.standard" . | indent 8 }}
     spec:
+      securityContext:
+        fsGroup: 65534
       serviceAccountName: {{ template "katafygio.serviceAccountName" . }}
       containers:
         - name: {{ .Chart.Name }}
@@ -69,7 +71,7 @@ spec:
           {{- if and .Values.gitSshKey .Values.gitUrl }}
           volumeMounts:
             - name: katafygio-gitssh
-              mountPath: "/gitssh-secret"
+              mountPath: "/.ssh"
               readOnly: true
           {{- end }}
           resources:
