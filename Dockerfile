@@ -6,7 +6,8 @@ RUN make deps
 RUN make build
 
 FROM alpine:3.7
-RUN apk upgrade --no-cache && apk --no-cache add ca-certificates git
+RUN apk upgrade --no-cache && \
+    apk --no-cache add ca-certificates git openssh-client
 RUN install -d -o nobody -g nobody /var/lib/katafygio/data
 COPY --from=builder /go/src/github.com/bpineau/katafygio/katafygio /usr/bin/
 VOLUME /var/lib/katafygio
