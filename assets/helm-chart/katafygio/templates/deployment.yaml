@@ -61,10 +61,12 @@ spec:
               containerPort: {{ .Values.healthcheckPort }}
               protocol: TCP
           livenessProbe:
+{{ toYaml .Values.probesDelays.liveness | indent 12 }}
             httpGet:
               path: /health
               port: http
           readinessProbe:
+{{ toYaml .Values.probesDelays.readiness | indent 12 }}
             httpGet:
               path: /health
               port: http

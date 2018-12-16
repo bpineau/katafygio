@@ -98,6 +98,17 @@ resources: {}
   #  cpu: 100m
   #  memory: 128Mi
 
+# liveness probes may need some tuning due to initial clone, which may be
+# very slow on large repos (healtcheck handle is registered after clone).
+# both liveness and readiness probes consumes the same health endpoint.
+probesDelays:
+  liveness:
+    initialDelaySeconds: 60
+    periodSeconds: 10
+    timeoutSeconds: 10
+  readiness:
+    timeoutSeconds: 10
+
 replicaCount: 1
 
 nodeSelector: {}
