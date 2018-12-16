@@ -24,7 +24,6 @@ lint:
 		--enable=megacheck \
 		--enable=unparam \
 		--enable=misspell \
-		--enable=gas \
 		--enable=goimports \
 		./...
 
