@@ -61,10 +61,12 @@ spec:
               containerPort: {{ .Values.healthcheckPort }}
               protocol: TCP
           livenessProbe:
+{{ toYaml .Values.probesDelays.liveness | indent 12 }}
             httpGet:
               path: /health
               port: http
           readinessProbe:
+{{ toYaml .Values.probesDelays.readiness | indent 12 }}
             httpGet:
               path: /health
               port: http
@@ -76,13 +78,20 @@ spec:
           {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
-      {{- if and .Values.gitSshKey .Values.gitUrl }}
       volumes:
+        {{- if and .Values.gitSshKey .Values.gitUrl }}
         - name: katafygio-gitssh
           secret:
             secretName: {{ template "katafygio.fullname" . }}
             defaultMode: 256
-      {{- end }}
+        {{- end }}
+        - name: katafygio-data
+        {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (include "katafygio.fullname" .) }}
+        {{- else }}
+          emptyDir: {}
+        {{- end -}}
     {{- with .Values.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
@@ -95,11 +104,3 @@ spec:
       tolerations:
 {{ toYaml . | indent 8 }}
     {{- end }}
-    volumes:
-      - name: katafygio-data
-      {{- if .Values.persistence.enabled }}
-        persistentVolumeClaim:
-          claimName: {{ .Values.persistence.existingClaim | default (include "katafygio.fullname" .) }}
-      {{- else }}
-        emptyDir: {}
-      {{- end -}}
