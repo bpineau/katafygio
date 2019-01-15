@@ -161,7 +161,7 @@ func (s *Store) CloneOrInit() (err error) {
 	if s.URL == "" {
 		err = s.Git("init", s.LocalDir)
 	} else {
-		err = s.Git("clone", s.URL, s.LocalDir)
+		err = s.Git("clone", "--depth=1", s.URL, s.LocalDir)
 	}
 
 	if err != nil {
