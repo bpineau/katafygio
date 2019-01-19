@@ -109,7 +109,9 @@ var (
 )
 
 func TestController(t *testing.T) {
-	flag.Lookup("logtostderr").Value.Set("true")
+	if err := flag.Lookup("logtostderr").Value.Set("true"); err != nil {
+		t.Errorf("failed to set logs flags: %v", err)
+	}
 
 	client := fakecontroller.NewFakeControllerSource()
 

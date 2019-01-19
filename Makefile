@@ -1,31 +1,19 @@
-
 all: build
 
+GOLANGCI_VERSION="1.12.5"
 tools:
-	which gometalinter || ( go get -u github.com/alecthomas/gometalinter && gometalinter --install )
+	which golangci-lint || ( \
+	  curl -sfL "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_VERSION}/golangci-lint-${GOLANGCI_VERSION}-linux-amd64.tar.gz" | \
+	  tar xz --strip-components 1 --wildcards '*/golangci-lint' && \
+	  chmod 755 golangci-lint && \
+	  mv golangci-lint ${GOPATH}/bin/ \
+	)
 	which glide || go get -u github.com/Masterminds/glide
 	which goveralls || go get github.com/mattn/goveralls
 
 lint:
-	gometalinter --concurrency=1 --deadline=300s --vendor --disable-all \
-		--enable=golint \
-		--enable=vet \
-		--enable=vetshadow \
-		--enable=varcheck \
-		--enable=errcheck \
-		--enable=structcheck \
-		--enable=deadcode \
-		--enable=ineffassign \
-		--enable=dupl \
-		--enable=gotype \
-		--enable=varcheck \
-		--enable=interfacer \
-		--enable=goconst \
-		--enable=megacheck \
-		--enable=unparam \
-		--enable=misspell \
-		--enable=goimports \
-		./...
+	@# vet, errcheck, deadcode, etc are already enabled by default; here we just add more checks:
+	golangci-lint run -E gofmt,golint,unconvert,dupl,goimports,misspell,maligned
 
 man:
 	go run assets/manpage.go
