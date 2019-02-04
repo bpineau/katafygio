@@ -199,11 +199,6 @@ func (s *Store) Commit() (changed bool, err error) {
 		return false, nil
 	}
 
-	err = s.Git("pull", "-s", "recursive", "-X", "ours")
-	if err != nil {
-		return false, fmt.Errorf("failed to git pull -s recursive -X ours: %v", err)
-	}
-
 	err = s.Git("add", "-A")
 	if err != nil {
 		return false, fmt.Errorf("failed to git add -A: %v", err)
@@ -235,6 +230,11 @@ func (s *Store) commitAndPush() {
 
 	if !changed || s.URL == "" {
 		return
+	}
+
+	err = s.Git("pull", "-s", "recursive", "-X", "ours", "--no-edit")
+	if err != nil {
+		return false, fmt.Errorf("failed to git pull -s recursive -X ours --no-edit: %v", err)
 	}
 
 	err = s.Push()
