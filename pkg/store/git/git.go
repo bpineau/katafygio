@@ -119,9 +119,9 @@ func (s *Store) Git(args ...string) error {
 }
 
 // Status tests the git status of a repository
-func (s *Store) Status() (changed bool, err error, msg string) {
+func (s *Store) Status() (changed bool, msg string, err error) {
 	if s.DryRun {
-		return false, nil, ""
+		return false, "", nil
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), TimeoutCommands)
@@ -133,14 +133,14 @@ func (s *Store) Status() (changed bool, err error, msg string) {
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return false, fmt.Errorf("git status failed with code %v: %s", err, out), ""
+		return false, "", fmt.Errorf("git status failed with code %v: %s", err, out)
 	}
 
 	if len(out) != 0 {
-		return true, nil, string(out)
+		return true, string(out), nil
 	}
 
-	return false, nil, ""
+	return false, "", nil
 }
 
 // CloneOrInit create a new local repository, either with "git clone" (if a GitURL
@@ -190,7 +190,7 @@ func (s *Store) CloneOrInit() (err error) {
 
 // Commit git commit all the directory's changes
 func (s *Store) Commit() (changed bool, err error) {
-	changed, err, status := s.Status()
+	changed, status, err := s.Status()
 	if err != nil {
 		return changed, err
 	}

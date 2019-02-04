@@ -36,7 +36,7 @@ func TestGitDryRun(t *testing.T) {
 		t.Errorf("failed to start git: %v", err)
 	}
 
-	_, err = repo.Status()
+	_, _, err = repo.Status()
 	if err != nil {
 		t.Error(err)
 	}
@@ -63,15 +63,15 @@ func TestGit(t *testing.T) {
 		t.Errorf("failed to start git: %v", err)
 	}
 
-	changed, err := repo.Status()
-	if changed || err != nil {
+	changed, status, err := repo.Status()
+	if changed || status != "" || err != nil {
 		t.Errorf("Status should return false on empty new repos (%v)", err)
 	}
 
 	_ = ioutil.WriteFile(dir+"/t.yaml", []byte{42}, 0600)
 
-	changed, err = repo.Status()
-	if !changed || err != nil {
+	changed, status, err = repo.Status()
+	if !changed || status == "" || err != nil {
 		t.Errorf("Status should return true on non committed files (%v)", err)
 	}
 
@@ -80,8 +80,8 @@ func TestGit(t *testing.T) {
 		t.Errorf("Commit should notify changes and not fail (%v)", err)
 	}
 
-	changed, err = repo.Status()
-	if changed || err != nil {
+	changed, status, err = repo.Status()
+	if changed || status != "" || err != nil {
 		t.Errorf("Status should return false after a add+commit (%v)", err)
 	}
 
@@ -110,8 +110,8 @@ func TestGit(t *testing.T) {
 	_ = ioutil.WriteFile(newdir+"/t2.yaml", []byte{42}, 0600)
 	repo.commitAndPush()
 
-	changed, err = repo.Status()
-	if changed || err != nil {
+	changed, status, err = repo.Status()
+	if changed || status != "" || err != nil {
 		t.Errorf("Status should return false after a add+commit+push (%v)", err)
 	}
 
@@ -141,7 +141,7 @@ func TestGit(t *testing.T) {
 	defer os.RemoveAll(notrepo)
 
 	repo.LocalDir = notrepo
-	_, err = repo.Status()
+	_, _, err = repo.Status()
 	if err == nil {
 		t.Error("Status should fail on a non-repos")
 	}
