@@ -55,13 +55,21 @@ func TestE2E(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	deleteResources()
-	_ = exec.Command("rm", "-rf", dumpPath)
+	err := exec.Command("rm", "-rf", dumpPath).Run()
+	if err != nil {
+		fmt.Printf("failed to clean test dump path %s: %v", dumpPath, err)
+		os.Exit(1)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
 		cmd := exec.CommandContext(ctx, "katafygio", "-e", dumpPath)
-		_ = cmd.Run()
+		err := cmd.Run()
+		if err != nil && err.Error() != "signal: killed" {
+			fmt.Printf("failed to spawn katafygio: %s", err.Error())
+			os.Exit(1)
+		}
 	}()
 
 	ret := m.Run()

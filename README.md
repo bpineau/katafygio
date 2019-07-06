@@ -107,7 +107,7 @@ brew install bpineau/tap/katafygio
 
 You can also deploy with the provided [helm](https://helm.sh/) chart:
 ```shell
-helm install --name kf-backups --namespace kube-system assets/helm-chart/katafygio/
+helm install --name kf-backups assets/helm-chart/katafygio/
 ```
 
 ## See Also
