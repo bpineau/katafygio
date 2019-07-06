@@ -5,7 +5,6 @@
 package observer
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -14,7 +13,9 @@ import (
 	"github.com/bpineau/katafygio/pkg/event"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
@@ -46,7 +47,7 @@ type Observer struct {
 	doneCh       chan struct{}
 	notifier     event.Notifier
 	discovery    discovery.DiscoveryInterface
-	cpool        dynamic.ClientPool
+	cpool        dynamic.Interface
 	ctrls        controllerCollection
 	factory      ControllerFactory
 	logger       logger
@@ -65,7 +66,7 @@ func New(log logger, client restclient, notif event.Notifier, factory Controller
 	return &Observer{
 		notifier:     notif,
 		discovery:    discovery.NewDiscoveryClientForConfigOrDie(client.GetRestConfig()),
-		cpool:        dynamic.NewDynamicClientPool(client.GetRestConfig()),
+		cpool:        dynamic.NewForConfigOrDie(client.GetRestConfig()),
 		ctrls:        make(controllerCollection),
 		factory:      factory,
 		logger:       log,
@@ -121,28 +122,34 @@ func (c *Observer) refresh() error {
 	c.Lock()
 	defer c.Unlock()
 
-	groups, err := c.discovery.ServerResources()
+	_, resources, err := c.discovery.ServerGroupsAndResources()
 	if err != nil {
-		return fmt.Errorf("failed to collect server resources: %v", err)
+		c.logger.Errorf("failed to collect some server resources: %v", err)
 	}
 
-	for name, res := range c.expandAndFilterAPIResources(groups) {
+	for name, res := range c.expandAndFilterAPIResources(resources) {
 		if _, ok := c.ctrls[name]; ok {
 			continue
 		}
 
-		kind := res.apiResource.Kind
-		gk := res.groupVersion.WithKind(kind)
-		cname := strings.ToLower(kind)
-
-		cl, err := c.cpool.ClientForGroupVersionKind(gk)
-		if err != nil {
-			return fmt.Errorf("failed to get a client for %s", name)
+		resource := schema.GroupVersionResource{
+			Group:    res.groupVersion.Group,
+			Version:  res.groupVersion.Version,
+			Resource: res.apiResource.Name,
 		}
 
-		client := cl.Resource(res.apiResource.DeepCopy(), metav1.NamespaceAll)
+		cname := strings.ToLower(res.apiResource.Kind)
+		namespace := metav1.NamespaceAll
+		lw := &cache.ListWatch{
+			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+				return c.cpool.Resource(resource).Namespace(namespace).List(options)
+			},
+			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+				return c.cpool.Resource(resource).Namespace(namespace).Watch(options)
+			},
+		}
 
-		c.ctrls[name] = c.factory.NewController(client, c.notifier, cname)
+		c.ctrls[name] = c.factory.NewController(lw, c.notifier, cname)
 		go c.ctrls[name].Start()
 	}
 
