@@ -32,7 +32,6 @@ before_script:
 
 install:
   - make tools
-  - make deps
 
 script:
   - make lint

@@ -110,13 +110,6 @@ You can also deploy with the provided [helm](https://helm.sh/) chart:
 helm install --name kf-backups --namespace kube-system assets/helm-chart/katafygio/
 ```
 
-If you want to build from sources, assuming you have go 1.10 or up and glide in the path, and GOPATH configured:
-
-```shell
-make deps
-make build
-```
-
 ## See Also
 
 * [Heptio Ark](https://github.com/heptio/ark) does sophisticated clusters backups, including volumes

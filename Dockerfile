@@ -1,8 +1,6 @@
 FROM golang:1.12 as builder
 WORKDIR /go/src/github.com/bpineau/katafygio
 COPY . .
-RUN go get -u github.com/Masterminds/glide
-RUN make deps
 RUN make build
 
 FROM alpine:3.10
