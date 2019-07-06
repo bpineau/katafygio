@@ -2,14 +2,15 @@ language: go
 go:
   - "1.12.x"
 
-# only needed for e2e tests
+# needed for e2e tests (so we can start minikube)
 sudo: required
+dist: xenial # We need the systemd for the kubeadm and it's default from 16.04+
 
 env:
   global:
     # only needed for e2e tests
-    - K8S_VERSION=v1.10.0
-    - MINIKUBE_VERSION=v0.26.1
+    - K8S_VERSION=v1.15.0
+    - MINIKUBE_VERSION=v1.2.0
     - MINIKUBE_WANTREPORTERRORPROMPT=false
     - MINIKUBE_WANTUPDATENOTIFICATION=false
     - CHANGE_MINIKUBE_NONE_USER=true
@@ -22,8 +23,7 @@ before_script:
   - sudo curl -Lo /usr/local/bin/minikube https://github.com/kubernetes/minikube/releases/download/${MINIKUBE_VERSION}/minikube-linux-amd64
   - sudo chmod +x /usr/local/bin/kubectl /usr/local/bin/minikube
   - mkdir -p $HOME/.kube && touch $HOME/.kube/config
-  # remove the --bootstrapper flag once this issue is solved: https://github.com/kubernetes/minikube/issues/2704
-  - sudo -E /usr/local/bin/minikube start --vm-driver=none --bootstrapper=localkube --kubernetes-version=${K8S_VERSION}
+  - sudo -E /usr/local/bin/minikube start --vm-driver=none --kubernetes-version=${K8S_VERSION}
   # Fix the kubectl context, as it is often stale.
   - /usr/local/bin/minikube update-context
   # Wait for Kubernetes to be up and ready.
