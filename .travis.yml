@@ -1,6 +1,6 @@
 language: go
 go:
-  - "1.10.x"
+  - "1.12.x"
 
 # only needed for e2e tests
 sudo: required

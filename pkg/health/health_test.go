@@ -21,13 +21,6 @@ func TestNoopHealth(t *testing.T) {
 	hc := New(logs, 0)
 	_ = hc.Start()
 	hc.Stop()
-
-	hc = New(logs, -42)
-	_ = hc.Start()
-	hc.Stop()
-	if logs.count != 1 {
-		t.Error("Failed to log an issue with a bogus port")
-	}
 }
 
 func TestHealthCheck(t *testing.T) {
