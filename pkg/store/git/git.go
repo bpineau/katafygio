@@ -232,6 +232,11 @@ func (s *Store) commitAndPush() {
 		return
 	}
 
+	err = s.Git("pull", "-s", "recursive", "-X", "ours", "--no-edit")
+	if err != nil {
+		s.Logger.Errorf("failed to git pull -s recursive -X ours --no-edit: %v", err)
+	}
+
 	err = s.Push()
 	if err != nil {
 		s.Logger.Errorf("%v", err)
