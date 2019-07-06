@@ -10,6 +10,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	fakecontroller "k8s.io/client-go/tools/cache/testing"
+	"k8s.io/klog"
 )
 
 type mockNotifier struct {
@@ -108,11 +109,14 @@ var (
 	}
 )
 
-func TestController(t *testing.T) {
-	if err := flag.Lookup("logtostderr").Value.Set("true"); err != nil {
-		t.Errorf("failed to set logs flags: %v", err)
-	}
+func init() {
+	// Enable klog which is used in dependencies
+	klog.InitFlags(nil)
+	_ = flag.Set("logtostderr", "true")
+	_ = flag.Set("v", "9")
+}
 
+func TestController(t *testing.T) {
 	client := fakecontroller.NewFakeControllerSource()
 
 	evt := new(mockNotifier)

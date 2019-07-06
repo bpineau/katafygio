@@ -125,14 +125,7 @@ var resourcesTests = []resTest{
 	{
 		title:   "Eliminate unparsable groups",
 		exclude: emptyExclude,
-		expect:  []string{"spam1"},
 		resources: []*metav1.APIResourceList{
-			{
-				GroupVersion: "foo/v42",
-				APIResources: []metav1.APIResource{
-					{Name: "spam1", Namespaced: true, Kind: "Spam1", Verbs: stdVerbs},
-				},
-			},
 			{
 				GroupVersion: "foo/bar/baz/v42",
 				APIResources: []metav1.APIResource{
