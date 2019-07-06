@@ -1,11 +1,11 @@
-FROM golang:1.10.1 as builder
+FROM golang:1.12 as builder
 WORKDIR /go/src/github.com/bpineau/katafygio
 COPY . .
 RUN go get -u github.com/Masterminds/glide
 RUN make deps
 RUN make build
 
-FROM alpine:3.8
+FROM alpine:3.10
 RUN apk upgrade --no-cache && \
     apk --no-cache add ca-certificates git openssh-client tini
 RUN install -d -o nobody -g nobody /var/lib/katafygio/data
