@@ -2,28 +2,30 @@ package cmd
 
 import (
 	"log"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var (
-	cfgFile   string
-	apiServer string
-	kubeConf  string
-	dryRun    bool
-	dumpMode  bool
-	logLevel  string
-	logOutput string
-	logServer string
-	filter    string
-	localDir  string
-	gitURL    string
-	healthP   int
-	resyncInt int
-	exclkind  []string
-	exclobj   []string
-	noGit     bool
+	cfgFile    string
+	apiServer  string
+	kubeConf   string
+	dryRun     bool
+	dumpMode   bool
+	logLevel   string
+	logOutput  string
+	logServer  string
+	filter     string
+	localDir   string
+	gitURL     string
+	gitTimeout time.Duration
+	healthP    int
+	resyncInt  int
+	exclkind   []string
+	exclobj    []string
+	noGit      bool
 )
 
 func bindPFlag(key string, cmd string) {
@@ -69,6 +71,9 @@ func init() {
 	RootCmd.PersistentFlags().StringVarP(&gitURL, "git-url", "g", "", "Git repository URL")
 	bindPFlag("git-url", "git-url")
 
+	RootCmd.PersistentFlags().DurationVarP(&gitTimeout, "git-timeout", "t", 300*time.Second, "Git operations timeout")
+	bindPFlag("git-timeout", "git-timeout")
+
 	RootCmd.PersistentFlags().StringSliceVarP(&exclkind, "exclude-kind", "x", nil, "Ressource kind to exclude. Eg. 'deployment'")
 	bindPFlag("exclude-kind", "exclude-kind")
 
@@ -100,6 +105,7 @@ func bindConf(cmd *cobra.Command, args []string) {
 	filter = viper.GetString("filter")
 	localDir = viper.GetString("local-dir")
 	gitURL = viper.GetString("git-url")
+	gitTimeout = viper.GetDuration("git-timeout")
 	healthP = viper.GetInt("healthcheck-port")
 	resyncInt = viper.GetInt("resync-interval")
 	exclkind = viper.GetStringSlice("exclude-kind")

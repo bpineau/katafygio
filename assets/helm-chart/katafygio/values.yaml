@@ -7,6 +7,10 @@
 # pod-local git repository, which can be on a persistent volume (see above).
 #gitUrl: https://user:token@github.com/myorg/myrepos.git
 
+# gitTimeout (optional) defines the deadline for git commands
+# (available with Katafygio v0.7.4 and up).
+#gitTimeout: 300s
+
 # noGit disable git versioning when true (will only keep an unversioned local dump up-to-date).
 noGit: false
 

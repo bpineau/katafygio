@@ -26,6 +26,9 @@ spec:
           args:
             - --local-dir={{ .Values.localDir }}
             - --healthcheck-port={{ .Values.healthcheckPort }}
+          {{- if .Values.gitTimeout }}
+            - --git-timeout={{ .Values.gitTimeout }}
+          {{- end }}
           {{- if .Values.gitUrl }}
             - --git-url={{ .Values.gitUrl }}
           {{- end }}

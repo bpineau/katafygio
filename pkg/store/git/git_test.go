@@ -5,11 +5,15 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/spf13/afero"
 )
 
-var testHasGit bool
+var (
+	testHasGit bool
+	timeout    = 5 * time.Second
+)
 
 func init() {
 	// Thanks to Mitchell Hashimoto!
@@ -31,7 +35,7 @@ func TestGitDryRun(t *testing.T) {
 
 	appFs = afero.NewMemMapFs()
 
-	repo, err := New(new(mockLog), true, "/tmp/ktest", "").Start()
+	repo, err := New(new(mockLog), true, "/tmp/ktest", "", timeout).Start()
 	if err != nil {
 		t.Errorf("failed to start git: %v", err)
 	}
@@ -58,7 +62,7 @@ func TestGit(t *testing.T) {
 
 	defer os.RemoveAll(dir)
 
-	repo, err := New(new(mockLog), false, dir, "").Start()
+	repo, err := New(new(mockLog), false, dir, "", timeout).Start()
 	if err != nil {
 		t.Errorf("failed to start git: %v", err)
 	}
