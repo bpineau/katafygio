@@ -27,7 +27,7 @@ gitSshConfig: |
 healthcheckPort: 8080
 
 # logLevel can be info, warning, error, or fatal.
-logLevel: warning
+logLevel: info
 # logOutput can be stdout, stderr, or syslog.
 logOutput: stdout
 # logServer (optional) provide the address of a remote syslog server.
@@ -55,7 +55,7 @@ resyncInterval: 300
 localDir: "/var/lib/katafygio/data"
 
 # persistence for the localDir dump directory. Note that configuring gitUrl
-# is an other way to achieve persistence.
+# is an other way to achieve persistence (to a remote git repository).
 persistence:
   enabled: true
   ## If defined, storageClassName: <storageClass>
@@ -87,7 +87,7 @@ serviceAccount:
 
 image:
   repository: bpineau/katafygio
-  tag: v0.7.3
+  tag: v0.7.4
   pullPolicy: IfNotPresent
 
 # resources define the deployment's cpu and memory resources.
