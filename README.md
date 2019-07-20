@@ -65,6 +65,7 @@ Flags:
   -x, --exclude-kind strings     Ressource kind to exclude. Eg. 'deployment'
   -y, --exclude-object strings   Object to exclude. Eg. 'configmap:kube-system/kube-dns'
   -l, --filter string            Label filter. Select only objects matching the label
+  -t, --git-timeout duration     Git operations timeout (default 5m0s)
   -g, --git-url string           Git repository URL
   -p, --healthcheck-port int     Port for answering healthchecks on /health url
   -h, --help                     help for katafygio

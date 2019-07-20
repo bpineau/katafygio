@@ -32,8 +32,10 @@ var (
 		Short: "Backup Kubernetes cluster as yaml files",
 		Long: "Backup Kubernetes cluster as yaml files in a git repository.\n" +
 			"--exclude-kind (-x) and --exclude-object (-y) may be specified several times.",
-		PreRun: bindConf,
-		RunE:   runE,
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		PreRun:        bindConf,
+		RunE:          runE,
 	}
 )
 
@@ -42,6 +44,7 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to create a logger: %v", err)
 	}
+	logger.Info(appName, " starting")
 
 	if restcfg == nil {
 		restcfg, err = client.New(apiServer, kubeConf)
@@ -55,9 +58,11 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 		return fmt.Errorf("Can't create directory %s: %v", localDir, err)
 	}
 
+	http := health.New(logger, healthP).Start()
+
 	var repo *git.Store
 	if !noGit {
-		repo, err = git.New(logger, dryRun, localDir, gitURL).Start()
+		repo, err = git.New(logger, dryRun, localDir, gitURL, gitTimeout).Start()
 	}
 	if err != nil {
 		return fmt.Errorf("failed to start git repo handler: %v", err)
@@ -67,8 +72,8 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 	fact := controller.NewFactory(logger, filter, resyncInt, exclobj)
 	reco := recorder.New(logger, evts, localDir, resyncInt*2, dryRun).Start()
 	obsv := observer.New(logger, restcfg, evts, fact, exclkind).Start()
-	http := health.New(logger, healthP).Start()
 
+	logger.Info(appName, " started")
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, syscall.SIGTERM)
 	signal.Notify(sigterm, syscall.SIGINT)
@@ -76,12 +81,14 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 		<-sigterm
 	}
 
+	logger.Info(appName, " stopping")
 	obsv.Stop()
 	reco.Stop()
 	http.Stop()
 	if !noGit {
 		repo.Stop()
 	}
+	logger.Info(appName, " stopped")
 
 	return nil
 }

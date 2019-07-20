@@ -12,9 +12,6 @@ import (
 )
 
 var (
-	// TimeoutCommands defines the max execution time for git commands
-	TimeoutCommands = 60 * time.Second
-
 	// CheckInterval defines the interval between local directory checks
 	CheckInterval = 10 * time.Second
 
@@ -40,6 +37,7 @@ type Store struct {
 	Logger   logger
 	LocalDir string
 	URL      string
+	Timeout  time.Duration
 	Author   string
 	Email    string
 	Msg      string
@@ -49,11 +47,12 @@ type Store struct {
 }
 
 // New instantiate a new git Store. url is optional.
-func New(log logger, dryRun bool, dir, url string) *Store {
+func New(log logger, dryRun bool, dir, url string, timeout time.Duration) *Store {
 	return &Store{
 		Logger:   log,
 		LocalDir: dir,
 		URL:      url,
+		Timeout:  timeout,
 		Author:   GitAuthor,
 		Email:    GitEmail,
 		Msg:      GitMsg,
@@ -103,7 +102,7 @@ func (s *Store) Git(args ...string) error {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), TimeoutCommands)
+	ctx, cancel := context.WithTimeout(context.Background(), s.Timeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "git", args...) // #nosec
@@ -112,6 +111,9 @@ func (s *Store) Git(args ...string) error {
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return fmt.Errorf("git %s timed out (%v, %s)", args[0], err, out)
+		}
 		return fmt.Errorf("git %s failed with code %v: %s", args[0], err, out)
 	}
 
@@ -124,7 +126,7 @@ func (s *Store) Status() (changed bool, err error) {
 		return false, nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), TimeoutCommands)
+	ctx, cancel := context.WithTimeout(context.Background(), s.Timeout)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "git", "status", "--porcelain") // #nosec
@@ -133,6 +135,9 @@ func (s *Store) Status() (changed bool, err error) {
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return false, fmt.Errorf("git status timed out (%v, %s)", err, out)
+		}
 		return false, fmt.Errorf("git status failed with code %v: %s", err, out)
 	}
 
