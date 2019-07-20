@@ -3,6 +3,7 @@ builds:
     ldflags: -s -w -X github.com/bpineau/katafygio/cmd.version={{.Version}}
     env:
       - CGO_ENABLED=0
+      - GO111MODULE=on
     goos:
       - darwin
       - linux
@@ -15,6 +16,10 @@ builds:
     hooks:
       post: make man
 
+before:
+  hooks:
+  - go mod download
+
 release:
   # don't autopublish
   draft: true
@@ -22,7 +27,8 @@ release:
 sign:
   artifacts: checksum
 
-archive:
+archives:
+- id: katafygio
   format: binary
 
 changelog:
@@ -31,15 +37,16 @@ changelog:
       - Merge
 
 dockers:
-  - image: bpineau/katafygio
+  - image_templates:
+    - "bpineau/katafygio:latest"
+    - "bpineau/katafygio:{{ .Tag }}"
     goos: linux
     goarch: amd64
     dockerfile: assets/Dockerfile.goreleaser
-    tag_templates:
-      - '{{ .Tag }}'
-      - latest
+    skip_push: true
 
-nfpm:
+nfpms:
+-
   name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}"
   homepage: https://github.com/bpineau/katafygio
   description: Discover and continuously backup Kubernetes objets as yaml files in git
