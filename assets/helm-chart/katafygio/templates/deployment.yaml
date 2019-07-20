@@ -1,4 +1,4 @@
-apiVersion: apps/v1beta2
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "katafygio.fullname" . }}
@@ -7,6 +7,8 @@ metadata:
 {{ include "katafygio.labels.standard" . | indent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: {{ template "katafygio.name" . }}
@@ -74,8 +76,10 @@ spec:
             httpGet:
               path: /health
               port: http
-          {{- if and .Values.gitSshKey .Values.gitUrl }}
           volumeMounts:
+            - name: {{ template "katafygio.fullname" . }}-data
+              mountPath: {{ .Values.localDir }}
+          {{- if and .Values.gitSshKey .Values.gitUrl }}
             - name: katafygio-gitssh
               mountPath: "/.ssh"
               readOnly: true
@@ -89,7 +93,7 @@ spec:
             secretName: {{ template "katafygio.fullname" . }}
             defaultMode: 256
         {{- end }}
-        - name: katafygio-data
+        - name: {{ template "katafygio.fullname" . }}-data
         {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:
             claimName: {{ .Values.persistence.existingClaim | default (include "katafygio.fullname" .) }}
