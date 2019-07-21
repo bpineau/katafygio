@@ -124,8 +124,8 @@ func TestGit(t *testing.T) {
 	// test various failure modes
 
 	_, err = repo.Start()
-	if err == nil {
-		t.Error("Start/Clone on an existing repository should fail")
+	if err != nil {
+		t.Error("Start/Clone on an existing repository should not fail")
 	}
 
 	err = repo.Git("fortzob", "42")

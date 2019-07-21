@@ -188,6 +188,10 @@ func (w *Listener) deleteObsoleteFiles() {
 	root := filepath.Clean(w.localDir)
 
 	err := afero.Walk(appFs, root, func(path string, info os.FileInfo, err error) error {
+		if info == nil {
+			return fmt.Errorf("can't stat %s", path)
+		}
+
 		if info.IsDir() {
 			return nil
 		}
