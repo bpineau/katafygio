@@ -101,7 +101,7 @@ ready to run on your desktop or in a cluster.
 
 We also provide a [docker image](https://hub.docker.com/r/bpineau/katafygio/).
 
-On MacOs, you can use the brew formula:
+On MacOS, you can use the brew formula:
 ```bash
 brew install bpineau/tap/katafygio
 ```
@@ -113,7 +113,7 @@ helm install --name kf-backups assets/helm-chart/katafygio/
 
 ## See Also
 
-* [Heptio Ark](https://github.com/heptio/ark) does sophisticated clusters backups, including volumes
+* [Heptio Velero](https://github.com/heptio/velero) does sophisticated clusters backups, including volumes
 * [Stash](https://github.com/appscode/stash) backups volumes
-* [etcd backup operator](https://coreos.com/operators/etcd/docs/latest/user/walkthrough/backup-operator.html)
+* [etcd backup operator](https://github.com/coreos/etcd-operator)
 
