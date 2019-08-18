@@ -9,5 +9,5 @@ RUN apk upgrade --no-cache && \
 RUN install -d -o nobody -g nobody /var/lib/katafygio/data
 COPY --from=builder /go/src/github.com/bpineau/katafygio/katafygio /usr/bin/
 VOLUME /var/lib/katafygio
-USER nobody
+USER 65534
 ENTRYPOINT ["/sbin/tini", "--", "/usr/bin/katafygio"]
