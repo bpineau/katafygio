@@ -164,7 +164,7 @@ func (s *Store) CloneOrInit() (err error) {
 	}
 
 	// One may both sync with a remote repos and keep a persistent local clone
-	if _, err := os.Stat(fmt.Sprintf("%s/.git/index", s.LocalDir)); err == nil {
+	if _, err = os.Stat(fmt.Sprintf("%s/.git/index", s.LocalDir)); err == nil {
 		return nil
 	}
 

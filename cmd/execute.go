@@ -55,7 +55,7 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 
 	err = appFs.MkdirAll(filepath.Clean(localDir), 0700)
 	if err != nil {
-		return fmt.Errorf("Can't create directory %s: %v", localDir, err)
+		return fmt.Errorf("can't create directory %s: %v", localDir, err)
 	}
 
 	http := health.New(logger, healthP).Start()

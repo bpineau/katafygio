@@ -1,4 +1,4 @@
-GOLANGCI_VERSION="1.12.5"
+GOLANGCI_VERSION=1.21.0
 export GO111MODULE := on
 
 all: build
@@ -13,8 +13,8 @@ tools:
 	which goveralls || go get github.com/mattn/goveralls
 
 lint:
-	@# vet, errcheck, deadcode, etc are already enabled by default; here we just add more checks:
-	golangci-lint run -E gofmt,golint,unconvert,dupl,goimports,misspell,maligned
+	@# govet, errcheck etc are already on by default. this -E enable extra linters:
+	golangci-lint run -E gofmt,golint,unconvert,dupl,goimports,misspell,maligned,stylecheck
 
 man:
 	go run assets/manpage.go

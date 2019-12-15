@@ -1,6 +1,6 @@
 language: go
 go:
-  - "1.12.x"
+  - "1.13.x"
 
 # needed for e2e tests (so we can start minikube)
 sudo: required
@@ -34,9 +34,9 @@ install:
   - make tools
 
 script:
+  - make install
   - make lint
   - make test
   - make coverall
-  - make install
   - make e2e
 

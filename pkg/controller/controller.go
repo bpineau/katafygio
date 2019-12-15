@@ -135,7 +135,7 @@ func (c *Controller) Start() {
 	go c.informer.Run(c.stopCh)
 
 	if !cache.WaitForCacheSync(c.stopCh, c.informer.HasSynced) {
-		utilruntime.HandleError(fmt.Errorf("Timed out waiting for cache sync"))
+		utilruntime.HandleError(fmt.Errorf("timed out waiting for cache sync"))
 		return
 	}
 
