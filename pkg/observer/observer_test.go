@@ -9,7 +9,7 @@ import (
 	"github.com/bpineau/katafygio/pkg/controller"
 	"github.com/bpineau/katafygio/pkg/event"
 
-	appsv1beta2 "k8s.io/api/apps/v1beta2"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -92,7 +92,7 @@ var resourcesTests = []resTest{
 		expect:  []string{"deployment"},
 		resources: []*metav1.APIResourceList{
 			{
-				GroupVersion: appsv1beta2.SchemeGroupVersion.String(),
+				GroupVersion: appsv1.SchemeGroupVersion.String(),
 				APIResources: []metav1.APIResource{
 					{Name: "deployments", Namespaced: true, Kind: "Deployment", Verbs: stdVerbs},
 				},
@@ -260,5 +260,29 @@ func TestObserverRecoverFromDicoveryFailure(t *testing.T) {
 	sort.Strings(expected)
 	if !reflect.DeepEqual(factory.names, expected) {
 		t.Errorf("%s failed: expected %v actual %v", "Recover from failure", expected, factory.names)
+	}
+}
+
+func TestExclusion(t *testing.T) {
+	excluded := []string{"rs", "poD", "endpoints"} // short, singular, plural forms
+
+	if isExcluded(excluded,
+		metav1.APIResource{Name: "Foos", Kind: "Foo", SingularName: "Foo", ShortNames: []string{}}) {
+		t.Error("exclusions shouldn't filter more than specified")
+	}
+
+	if !isExcluded(excluded,
+		metav1.APIResource{Name: "Endpoints", Kind: "Endpoints", SingularName: "Endpoint", ShortNames: []string{"ep"}}) {
+		t.Error("exclusions should work on plural resource names")
+	}
+
+	if !isExcluded(excluded,
+		metav1.APIResource{Name: "Pods", Kind: "Pod", SingularName: "Pod", ShortNames: []string{"po"}}) {
+		t.Error("exclusions should ignore objects case")
+	}
+
+	if !isExcluded(excluded,
+		metav1.APIResource{Name: "Replicasets", Kind: "ReplicaSet", SingularName: "replicaset", ShortNames: []string{"rs"}}) {
+		t.Error("exclusions should support resources shortnames")
 	}
 }
