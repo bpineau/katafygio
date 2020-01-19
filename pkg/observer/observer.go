@@ -212,12 +212,17 @@ func (c *Observer) expandAndFilterAPIResources(groups []*metav1.APIResourceList)
 
 func isExcluded(excluded []string, ar metav1.APIResource) bool {
 	lname := strings.ToLower(ar.Name)
+	lkind := strings.ToLower(ar.Kind)
 	singular := strings.ToLower(ar.SingularName)
 
 	for _, ctl := range excluded {
 		excl := strings.ToLower(ctl)
 
 		if strings.Compare(lname, excl) == 0 {
+			return true
+		}
+
+		if strings.Compare(lkind, excl) == 0 {
 			return true
 		}
 

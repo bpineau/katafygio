@@ -20,7 +20,7 @@ To create a local git repository and continuously save the cluster content:
 katafygio --local-dir /tmp/kfdump
 ```
 
-Same, but also continuously push to a remote repository:
+To continuously push changes to a remote git repository:
 ```bash
 katafygio --git-url https://user:token@github.com/myorg/myrepos.git --local-dir /tmp/kfdump
 ```
@@ -47,7 +47,8 @@ You can also use the [docker image](https://hub.docker.com/r/bpineau/katafygio/)
 
 ```
 Backup Kubernetes cluster as yaml files in a git repository.
---exclude-kind (-x) and --exclude-object (-y) may be specified several times.
+--exclude-kind (-x) and --exclude-object (-y) may be specified several times,
+or once with several comma separated values.
 
 Usage:
   katafygio [flags]
@@ -70,7 +71,7 @@ Flags:
   -g, --git-url string           Git repository URL
   -p, --healthcheck-port int     Port for answering healthchecks on /health url
   -h, --help                     help for katafygio
-  -k, --kube-config string       Kubernetes config path
+  -k, --kube-config string       Kubernetes configuration path
   -e, --local-dir string         Where to dump yaml files (default "./kubernetes-backup")
   -v, --log-level string         Log level (default "info")
   -o, --log-output string        Log output (default "stderr")
@@ -79,7 +80,7 @@ Flags:
   -i, --resync-interval int      Full resync interval in seconds (0 to disable) (default 900)
 ```
 
-## Config file and env variables
+## Configuration file and env variables
 
 All settings can be passed by command line options, or environment variable, or in
 [a yaml configuration file](https://github.com/bpineau/katafygio/blob/master/assets/katafygio.yaml)
@@ -90,8 +91,9 @@ in uppercase, prefixed by "KF", and with underscore instead of dashs. ie.:
 export KF_GIT_URL=https://user:token@github.com/myorg/myrepos.git
 export KF_LOCAL_DIR=/tmp/kfdump
 export KF_LOG_LEVEL=info
+export KF_EXCLUDE_KIND="pod ep rs clusterrole"
 
-# exception, for kubectl compatibility:
+# non-prefixed KUBECONFIG works the same as for kubectl
 export KUBECONFIG=/tmp/kconfig
 ```
 

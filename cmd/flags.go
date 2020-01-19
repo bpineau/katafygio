@@ -50,9 +50,6 @@ func init() {
 
 	RootCmd.PersistentFlags().StringVarP(&kubeConf, "kube-config", "k", "", "Kubernetes configuration path")
 	bindPFlag("kube-config", "kube-config")
-	if err := viper.BindEnv("kube-config", "KUBECONFIG"); err != nil {
-		log.Fatal("Failed to bind cli argument:", err)
-	}
 
 	RootCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "Dry-run mode: don't store anything")
 	bindPFlag("dry-run", "dry-run")
@@ -100,6 +97,7 @@ func init() {
 // for whatever the reason, viper don't auto bind values from config file so we have to tell him
 func bindConf(cmd *cobra.Command, args []string) {
 	apiServer = viper.GetString("api-server")
+	context = viper.GetString("context")
 	kubeConf = viper.GetString("kube-config")
 	dryRun = viper.GetBool("dry-run")
 	dumpMode = viper.GetBool("dump-only")

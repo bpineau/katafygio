@@ -3,6 +3,7 @@
 # To provide alternate api-server URL or config to reach the cluster:
 #api-server: http://127.0.0.1:8080
 #kube-config: /etc/kubernetes/config
+#context: default
 
 log-level: "info"
 log-output: "stderr"
@@ -18,7 +19,7 @@ local-dir: /var/cache/katafygio
 #git-timeout: 300s
 
 # Port to listen for http health check probes. 0 to disable.
-healthcheck-port: 0
+healthcheck-port: 8080
 
 # How often should Katafygio full resync. Only needed to catch possibly
 # missed events: events are handled in real-time. 0 to disable.
@@ -44,3 +45,11 @@ resync-interval: 900
 #  - configmap:kube-system/datadog-leader-elector
 #  - deployment:default/testdeploy
 
+# Set to true o dump once and exit (instead of continuously dumping new changes)
+dump-only: false
+
+# Set to true to disable git versionning
+no-git: false
+
+# Set to true to simulate operations (not dumping or versionning anything)
+dry-run: false

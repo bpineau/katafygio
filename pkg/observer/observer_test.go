@@ -264,7 +264,7 @@ func TestObserverRecoverFromDicoveryFailure(t *testing.T) {
 }
 
 func TestExclusion(t *testing.T) {
-	excluded := []string{"rs", "poD", "endpoints"} // short, singular, plural forms
+	excluded := []string{"rs", "pods", "node", "Endpoint"} // short, singular, plural forms
 
 	if isExcluded(excluded,
 		metav1.APIResource{Name: "Foos", Kind: "Foo", SingularName: "Foo", ShortNames: []string{}}) {
@@ -277,7 +277,12 @@ func TestExclusion(t *testing.T) {
 	}
 
 	if !isExcluded(excluded,
-		metav1.APIResource{Name: "Pods", Kind: "Pod", SingularName: "Pod", ShortNames: []string{"po"}}) {
+		metav1.APIResource{Name: "Pods", Kind: "Pod", ShortNames: []string{"po"}}) {
+		t.Error("exclusions should consider kind's name")
+	}
+
+	if !isExcluded(excluded,
+		metav1.APIResource{Name: "Node", Kind: "Node", SingularName: "Node", ShortNames: []string{""}}) {
 		t.Error("exclusions should ignore objects case")
 	}
 
