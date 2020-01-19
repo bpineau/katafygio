@@ -76,6 +76,7 @@ Flags:
   -v, --log-level string         Log level (default "info")
   -o, --log-output string        Log output (default "stderr")
   -r, --log-server string        Log server (if using syslog)
+  -a, --namespace string         Only dump objects from this namespace
   -n, --no-git                   Don't version with git
   -i, --resync-interval int      Full resync interval in seconds (0 to disable) (default 900)
 ```
@@ -84,8 +85,7 @@ Flags:
 
 All settings can be passed by command line options, or environment variable, or in
 [a yaml configuration file](https://github.com/bpineau/katafygio/blob/master/assets/katafygio.yaml)
-(thanks to Viper and Cobra libs). The environment are the same as cli options,
-in uppercase, prefixed by "KF", and with underscore instead of dashs. ie.:
+The environment are the same as command line options, in uppercase, prefixed by "KF_", and with underscore instead of dashs. ie.:
 
 ```
 export KF_GIT_URL=https://user:token@github.com/myorg/myrepos.git
@@ -100,7 +100,7 @@ export KUBECONFIG=/tmp/kconfig
 ## Installation
 
 You can find pre-built binaries in the [releases](https://github.com/bpineau/katafygio/releases) page,
-ready to run on your desktop or in a cluster.
+ready to run on your desktop or in a Kubernetes cluster.
 
 We also provide a [docker image](https://hub.docker.com/r/bpineau/katafygio/).
 

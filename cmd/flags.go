@@ -12,6 +12,7 @@ var (
 	cfgFile    string
 	apiServer  string
 	context    string
+	namespace  string
 	kubeConf   string
 	dryRun     bool
 	dumpMode   bool
@@ -48,6 +49,9 @@ func init() {
 	RootCmd.PersistentFlags().StringVarP(&context, "context", "q", "", "Kubernetes configuration context")
 	bindPFlag("context", "context")
 
+	RootCmd.PersistentFlags().StringVarP(&namespace, "namespace", "a", "", "Only dump objects from this namespace")
+	bindPFlag("namespace", "namespace")
+
 	RootCmd.PersistentFlags().StringVarP(&kubeConf, "kube-config", "k", "", "Kubernetes configuration path")
 	bindPFlag("kube-config", "kube-config")
 
@@ -81,7 +85,7 @@ func init() {
 	RootCmd.PersistentFlags().StringSliceVarP(&exclobj, "exclude-object", "y", nil, "Object to exclude. Eg. 'configmap:kube-system/kube-dns'")
 	bindPFlag("exclude-object", "exclude-object")
 
-	RootCmd.PersistentFlags().StringVarP(&filter, "filter", "l", "", "Label filter. Select only objects matching the label.")
+	RootCmd.PersistentFlags().StringVarP(&filter, "filter", "l", "", "Label filter. Select only objects matching the label")
 	bindPFlag("filter", "filter")
 
 	RootCmd.PersistentFlags().IntVarP(&healthP, "healthcheck-port", "p", 0, "Port for answering healthchecks on /health url")
@@ -98,6 +102,7 @@ func init() {
 func bindConf(cmd *cobra.Command, args []string) {
 	apiServer = viper.GetString("api-server")
 	context = viper.GetString("context")
+	namespace = viper.GetString("namespace")
 	kubeConf = viper.GetString("kube-config")
 	dryRun = viper.GetBool("dry-run")
 	dumpMode = viper.GetBool("dump-only")
