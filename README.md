@@ -35,9 +35,9 @@ will help to keep resources usage low, and a concise git history. Eg.:
 # confidential), events and node (irrelevant), and the leader-elector
 # configmap that has low value and changes a lot, causing commits churn.
 
-katafygio \
-  -g https://user:token@github.com/myorg/myrepos.git -e /tmp/kfdump \
-  -x secret -x pod -x replicaset -x node -x endpoints -x event \
+katafygio -e /tmp/kfdump \
+  -g https://user:token@github.com/myorg/myrepos.git \
+  -x secret,pod,event,replicaset,node,endpoints \
   -y configmap:kube-system/leader-elector
 ```
 
@@ -60,6 +60,7 @@ Available Commands:
 Flags:
   -s, --api-server string        Kubernetes api-server url
   -c, --config string            Configuration file (default "/etc/katafygio/katafygio.yaml")
+  -q, --context string           Kubernetes configuration context
   -d, --dry-run                  Dry-run mode: don't store anything
   -m, --dump-only                Dump mode: dump everything once and exit
   -x, --exclude-kind strings     Ressource kind to exclude. Eg. 'deployment'

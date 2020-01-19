@@ -11,6 +11,7 @@ import (
 var (
 	cfgFile    string
 	apiServer  string
+	context    string
 	kubeConf   string
 	dryRun     bool
 	dumpMode   bool
@@ -44,7 +45,10 @@ func init() {
 	RootCmd.PersistentFlags().StringVarP(&apiServer, "api-server", "s", "", "Kubernetes api-server url")
 	bindPFlag("api-server", "api-server")
 
-	RootCmd.PersistentFlags().StringVarP(&kubeConf, "kube-config", "k", "", "Kubernetes config path")
+	RootCmd.PersistentFlags().StringVarP(&context, "context", "q", "", "Kubernetes configuration context")
+	bindPFlag("context", "context")
+
+	RootCmd.PersistentFlags().StringVarP(&kubeConf, "kube-config", "k", "", "Kubernetes configuration path")
 	bindPFlag("kube-config", "kube-config")
 	if err := viper.BindEnv("kube-config", "KUBECONFIG"); err != nil {
 		log.Fatal("Failed to bind cli argument:", err)
