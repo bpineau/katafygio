@@ -47,7 +47,7 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 	logger.Info(appName, " starting")
 
 	if restcfg == nil {
-		restcfg, err = client.New(apiServer, kubeConf)
+		restcfg, err = client.New(apiServer, context, kubeConf)
 		if err != nil {
 			return fmt.Errorf("failed to create a client: %v", err)
 		}
