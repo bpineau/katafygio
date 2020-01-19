@@ -37,7 +37,7 @@ will help to keep resources usage low, and a concise git history. Eg.:
 
 katafygio -e /tmp/kfdump \
   -g https://user:token@github.com/myorg/myrepos.git \
-  -x secret,pod,event,replicaset,node,endpoints \
+  -x secret,pod,event,replicaset,node,endpoint \
   -y configmap:kube-system/leader-elector
 ```
 

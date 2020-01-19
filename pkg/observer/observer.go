@@ -185,7 +185,7 @@ func (c *Observer) expandAndFilterAPIResources(groups []*metav1.APIResourceList)
 			}
 
 			// remove user filtered objet kinds
-			if isExcluded(c.excludedkind, ar.Kind) {
+			if isExcluded(c.excludedkind, ar) {
 				continue
 			}
 
@@ -210,11 +210,25 @@ func (c *Observer) expandAndFilterAPIResources(groups []*metav1.APIResourceList)
 	return resources
 }
 
-func isExcluded(excluded []string, name string) bool {
-	lname := strings.ToLower(name)
+func isExcluded(excluded []string, ar metav1.APIResource) bool {
+	lname := strings.ToLower(ar.Name)
+	singular := strings.ToLower(ar.SingularName)
+
 	for _, ctl := range excluded {
-		if strings.Compare(lname, strings.ToLower(ctl)) == 0 {
+		excl := strings.ToLower(ctl)
+
+		if strings.Compare(lname, excl) == 0 {
 			return true
+		}
+
+		if strings.Compare(singular, excl) == 0 {
+			return true
+		}
+
+		for _, alt := range ar.ShortNames {
+			if strings.Compare(strings.ToLower(alt), excl) == 0 {
+				return true
+			}
 		}
 	}
 
