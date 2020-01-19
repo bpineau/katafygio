@@ -52,6 +52,7 @@ type Observer struct {
 	factory      ControllerFactory
 	logger       logger
 	excludedkind []string
+	namespace    string
 }
 
 type gvk struct {
@@ -62,7 +63,7 @@ type gvk struct {
 type resources map[string]*gvk
 
 // New returns a new observer, that will watch API resources and create controllers
-func New(log logger, client restclient, notif event.Notifier, factory ControllerFactory, excluded []string) *Observer {
+func New(log logger, client restclient, notif event.Notifier, factory ControllerFactory, excluded []string, namespace string) *Observer {
 	return &Observer{
 		notifier:     notif,
 		discovery:    discovery.NewDiscoveryClientForConfigOrDie(client.GetRestConfig()),
@@ -71,6 +72,7 @@ func New(log logger, client restclient, notif event.Notifier, factory Controller
 		factory:      factory,
 		logger:       log,
 		excludedkind: excluded,
+		namespace:    namespace,
 	}
 }
 
@@ -140,6 +142,9 @@ func (c *Observer) refresh() error {
 
 		cname := strings.ToLower(res.apiResource.Kind)
 		namespace := metav1.NamespaceAll
+		if c.namespace != "" {
+			namespace = c.namespace
+		}
 		lw := &cache.ListWatch{
 			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 				return c.cpool.Resource(resource).Namespace(namespace).List(options)
@@ -186,6 +191,11 @@ func (c *Observer) expandAndFilterAPIResources(groups []*metav1.APIResourceList)
 
 			// remove user filtered objet kinds
 			if isExcluded(c.excludedkind, ar) {
+				continue
+			}
+
+			// ignore non namespaced resources, when we have a namespace filter
+			if c.namespace != "" && !ar.Namespaced {
 				continue
 			}
 

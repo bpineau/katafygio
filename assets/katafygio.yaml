@@ -45,6 +45,9 @@ resync-interval: 900
 #  - configmap:kube-system/datadog-leader-elector
 #  - deployment:default/testdeploy
 
+# Only dump objects belonging to a specific namespace
+#namespace:
+
 # Set to true o dump once and exit (instead of continuously dumping new changes)
 dump-only: false
 

@@ -62,6 +62,7 @@ type resTest struct {
 	resources []*metav1.APIResourceList
 	exclude   []string
 	expect    []string
+	namespace string
 }
 
 var resourcesTests = []resTest{
@@ -167,12 +168,30 @@ var resourcesTests = []resTest{
 			},
 		},
 	},
+
+	{
+		title:     "Eliminate non namespaced",
+		exclude:   []string{},
+		expect:    []string{"bar1", "bar2"},
+		namespace: "foo",
+		resources: []*metav1.APIResourceList{
+			{
+				GroupVersion: "foo/v42",
+				APIResources: []metav1.APIResource{
+					{Name: "bar1", Namespaced: true, Kind: "Bar1", Verbs: stdVerbs},
+					{Name: "bar2", Namespaced: true, Kind: "Bar2", Verbs: stdVerbs},
+					{Name: "bar3", Namespaced: false, Kind: "Bar3", Verbs: stdVerbs},
+					{Name: "bar4", Namespaced: false, Kind: "Bar4", Verbs: stdVerbs},
+				},
+			},
+		},
+	},
 }
 
 func TestObserver(t *testing.T) {
 	for _, tt := range resourcesTests {
 		factory := new(mockFactory)
-		obs := New(new(mockLog), new(mockClient), &mockNotifier{}, factory, tt.exclude)
+		obs := New(new(mockLog), new(mockClient), &mockNotifier{}, factory, tt.exclude, tt.namespace)
 
 		client := fakeclientset.NewSimpleClientset()
 		fakeDiscovery, _ := client.Discovery().(*fakediscovery.FakeDiscovery)
@@ -213,7 +232,7 @@ func TestObserverDuplicas(t *testing.T) {
 	fakeDiscovery.Resources = duplicatesTest
 
 	factory := new(mockFactory)
-	obs := New(new(mockLog), new(mockClient), &mockNotifier{}, factory, make([]string, 0))
+	obs := New(new(mockLog), new(mockClient), &mockNotifier{}, factory, make([]string, 0), "")
 	obs.discovery = fakeDiscovery
 	obs.Start()
 	err := obs.refresh()
@@ -243,7 +262,7 @@ func TestObserverRecoverFromDicoveryFailure(t *testing.T) {
 	}
 
 	factory := new(mockFactory)
-	obs := New(new(mockLog), new(mockClient), &mockNotifier{}, factory, make([]string, 0))
+	obs := New(new(mockLog), new(mockClient), &mockNotifier{}, factory, make([]string, 0), "")
 
 	// failing discovery
 	obs.discovery.RESTClient().(*rest.RESTClient).Client = fakeClient.Client

@@ -31,7 +31,8 @@ var (
 		Use:   appName,
 		Short: "Backup Kubernetes cluster as yaml files",
 		Long: "Backup Kubernetes cluster as yaml files in a git repository.\n" +
-			"--exclude-kind (-x) and --exclude-object (-y) may be specified several times.",
+			"--exclude-kind (-x) and --exclude-object (-y) may be specified several times,\n" +
+			"or once with several comma separated values.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PreRun:        bindConf,
@@ -71,7 +72,7 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 	evts := event.New()
 	fact := controller.NewFactory(logger, filter, resyncInt, exclobj)
 	reco := recorder.New(logger, evts, localDir, resyncInt*2, dryRun).Start()
-	obsv := observer.New(logger, restcfg, evts, fact, exclkind).Start()
+	obsv := observer.New(logger, restcfg, evts, fact, exclkind, namespace).Start()
 
 	logger.Info(appName, " started")
 	sigterm := make(chan os.Signal, 1)
