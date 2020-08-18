@@ -35,7 +35,7 @@ func TestGitDryRun(t *testing.T) {
 
 	appFs = afero.NewMemMapFs()
 
-	repo, err := New(new(mockLog), true, "/tmp/ktest", "", timeout).Start()
+	repo, err := New(new(mockLog), true, "/tmp/ktest", "", "test", "test@test", timeout, 10*time.Second).Start()
 	if err != nil {
 		t.Errorf("failed to start git: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestGit(t *testing.T) {
 
 	defer os.RemoveAll(dir)
 
-	repo, err := New(new(mockLog), false, dir, "", timeout).Start()
+	repo, err := New(new(mockLog), false, dir, "", "test", "test@test", timeout, 10*time.Second).Start()
 	if err != nil {
 		t.Errorf("failed to start git: %v", err)
 	}

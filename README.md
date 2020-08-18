@@ -60,6 +60,7 @@ Available Commands:
 
 Flags:
   -s, --api-server string        Kubernetes api-server url
+  -j, --check-interval int       Check interval in seconds (default 10)
   -c, --config string            Configuration file (default "/etc/katafygio/katafygio.yaml")
   -q, --context string           Kubernetes configuration context
   -d, --dry-run                  Dry-run mode: don't store anything
@@ -67,6 +68,8 @@ Flags:
   -x, --exclude-kind strings     Ressource kind to exclude. Eg. 'deployment'
   -y, --exclude-object strings   Object to exclude. Eg. 'configmap:kube-system/kube-dns'
   -l, --filter string            Label filter. Select only objects matching the label
+  -b, --git-author string        Author for git commits (default "Katafygio")
+  -f, --git-email string         Email address for git commits (default "katafygio@localhost")
   -t, --git-timeout duration     Git operations timeout (default 5m0s)
   -g, --git-url string           Git repository URL
   -p, --healthcheck-port int     Port for answering healthchecks on /health url

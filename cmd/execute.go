@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -63,7 +64,7 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 
 	var repo *git.Store
 	if !noGit {
-		repo, err = git.New(logger, dryRun, localDir, gitURL, gitTimeout).Start()
+		repo, err = git.New(logger, dryRun, localDir, gitURL, gitAuthor, gitEmail, gitTimeout, time.Duration(checkInt)*time.Second).Start()
 	}
 	if err != nil {
 		return fmt.Errorf("failed to start git repo handler: %v", err)
