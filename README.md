@@ -59,26 +59,27 @@ Available Commands:
   version     Print the version number
 
 Flags:
-  -s, --api-server string        Kubernetes api-server url
-  -c, --config string            Configuration file (default "/etc/katafygio/katafygio.yaml")
-  -q, --context string           Kubernetes configuration context
-  -d, --dry-run                  Dry-run mode: don't store anything
-  -m, --dump-only                Dump mode: dump everything once and exit
-  -x, --exclude-kind strings     Ressource kind to exclude. Eg. 'deployment'
-  -y, --exclude-object strings   Object to exclude. Eg. 'configmap:kube-system/kube-dns'
-  -l, --filter string            Label filter. Select only objects matching the label
-  -t, --git-timeout duration     Git operations timeout (default 5m0s)
-  -g, --git-url string           Git repository URL
-  -p, --healthcheck-port int     Port for answering healthchecks on /health url
-  -h, --help                     help for katafygio
-  -k, --kube-config string       Kubernetes configuration path
-  -e, --local-dir string         Where to dump yaml files (default "./kubernetes-backup")
-  -v, --log-level string         Log level (default "info")
-  -o, --log-output string        Log output (default "stderr")
-  -r, --log-server string        Log server (if using syslog)
-  -a, --namespace string         Only dump objects from this namespace
-  -n, --no-git                   Don't version with git
-  -i, --resync-interval int      Full resync interval in seconds (0 to disable) (default 900)
+  -s, --api-server string            Kubernetes api-server url
+  -c, --config string                Configuration file (default "/etc/katafygio/katafygio.yaml")
+  -q, --context string               Kubernetes configuration context
+  -d, --dry-run                      Dry-run mode: don't store anything
+  -m, --dump-only                    Dump mode: dump everything once and exit
+  -x, --exclude-kind strings         Ressource kind to exclude. Eg. 'deployment'
+  -z, --exclude-namespaces strings   Namespaces to exclude. Eg. 'temp.*' as regexes. This collects all namespaces and then filters them. Don't use it with the namespace flag.
+  -y, --exclude-object strings       Object to exclude. Eg. 'configmap:kube-system/kube-dns'
+  -l, --filter string                Label filter. Select only objects matching the label
+  -t, --git-timeout duration         Git operations timeout (default 5m0s)
+  -g, --git-url string               Git repository URL
+  -p, --healthcheck-port int         Port for answering healthchecks on /health url
+  -h, --help                         help for katafygio
+  -k, --kube-config string           Kubernetes configuration path
+  -e, --local-dir string             Where to dump yaml files (default "./kubernetes-backup")
+  -v, --log-level string             Log level (default "info")
+  -o, --log-output string            Log output (default "stderr")
+  -r, --log-server string            Log server (if using syslog)
+  -a, --namespace string             Only dump objects from this namespace
+  -n, --no-git                       Don't version with git
+  -i, --resync-interval int          Full resync interval in seconds (0 to disable) (default 900)
 ```
 
 ## Configuration file and env variables

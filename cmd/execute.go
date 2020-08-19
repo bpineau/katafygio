@@ -70,7 +70,7 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 	}
 
 	evts := event.New()
-	fact := controller.NewFactory(logger, filter, resyncInt, exclobj)
+	fact := controller.NewFactory(logger, filter, resyncInt, exclobj, exclnamespaces)
 	reco := recorder.New(logger, evts, localDir, resyncInt*2, dryRun).Start()
 	obsv := observer.New(logger, restcfg, evts, fact, exclkind, namespace).Start()
 
