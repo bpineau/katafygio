@@ -12,15 +12,6 @@ import (
 )
 
 var (
-	// CheckInterval defines the interval between local directory checks
-	CheckInterval = 10 * time.Second
-
-	// GitAuthor is the name of the commiter
-	GitAuthor = "Katafygio"
-
-	// GitEmail is the email of the commiter
-	GitEmail = "katafygio@localhost"
-
 	// GitMsg is the commit message we'll use
 	GitMsg = "Kubernetes cluster change"
 )
@@ -34,35 +25,37 @@ type logger interface {
 
 // Store will maintain a git repository off dumped kube objects
 type Store struct {
-	Logger   logger
-	LocalDir string
-	URL      string
-	Timeout  time.Duration
-	Author   string
-	Email    string
-	Msg      string
-	DryRun   bool
-	stopch   chan struct{}
-	donech   chan struct{}
+	Logger        logger
+	LocalDir      string
+	URL           string
+	Timeout       time.Duration
+	CheckInterval time.Duration
+	Author        string
+	Email         string
+	Msg           string
+	DryRun        bool
+	stopch        chan struct{}
+	donech        chan struct{}
 }
 
 // New instantiate a new git Store. url is optional.
-func New(log logger, dryRun bool, dir, url string, timeout time.Duration) *Store {
+func New(log logger, dryRun bool, dir, url string, author string, email string, timeout time.Duration, checkInterval time.Duration) *Store {
 	return &Store{
-		Logger:   log,
-		LocalDir: dir,
-		URL:      url,
-		Timeout:  timeout,
-		Author:   GitAuthor,
-		Email:    GitEmail,
-		Msg:      GitMsg,
-		DryRun:   dryRun,
+		Logger:        log,
+		LocalDir:      dir,
+		URL:           url,
+		Timeout:       timeout,
+		CheckInterval: checkInterval,
+		Author:        author,
+		Email:         email,
+		Msg:           GitMsg,
+		DryRun:        dryRun,
 	}
 }
 
 // Start maintains a directory content committed
 func (s *Store) Start() (*Store, error) {
-	s.Logger.Infof("Starting git repository synchronizer")
+	s.Logger.Infof(fmt.Sprintf("Starting git repository synchronizer every %s", s.CheckInterval.String()))
 	s.stopch = make(chan struct{})
 	s.donech = make(chan struct{})
 
@@ -72,7 +65,7 @@ func (s *Store) Start() (*Store, error) {
 	}
 
 	go func() {
-		checkTick := time.NewTicker(CheckInterval)
+		checkTick := time.NewTicker(s.CheckInterval)
 		defer checkTick.Stop()
 		defer close(s.donech)
 

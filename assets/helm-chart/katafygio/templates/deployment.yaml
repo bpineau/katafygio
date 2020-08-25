@@ -62,6 +62,15 @@ spec:
             - --exclude-object={{ . }}
             {{- end }}
           {{- end }}
+          {{- if .Values.gitAuthor }}
+            - --git-author={{ .Values.gitAuthor }}
+          {{- end }}
+          {{- if .Values.gitEmail }}
+            - --git-email={{ .Values.gitEmail }}
+          {{- end }}
+          {{- if .Values.checkInterval }}
+            - --check-interval={{ .Values.checkInterval }}
+          {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.healthcheckPort }}

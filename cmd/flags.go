@@ -25,9 +25,12 @@ var (
 	gitTimeout time.Duration
 	healthP    int
 	resyncInt  int
+	checkInt   int
 	exclkind   []string
 	exclobj    []string
 	noGit      bool
+	gitAuthor  string
+	gitEmail   string
 )
 
 func bindPFlag(key string, cmd string) {
@@ -94,8 +97,17 @@ func init() {
 	RootCmd.PersistentFlags().IntVarP(&resyncInt, "resync-interval", "i", 900, "Full resync interval in seconds (0 to disable)")
 	bindPFlag("resync-interval", "resync-interval")
 
+	RootCmd.PersistentFlags().IntVarP(&checkInt, "check-interval", "j", 10, "Check interval in seconds")
+	bindPFlag("check-interval", "check-interval")
+
 	RootCmd.PersistentFlags().BoolVarP(&noGit, "no-git", "n", false, "Don't version with git")
 	bindPFlag("no-git", "no-git")
+
+	RootCmd.PersistentFlags().StringVarP(&gitAuthor, "git-author", "b", "Katafygio", "Author for git commits")
+	bindPFlag("git-author", "git-author")
+
+	RootCmd.PersistentFlags().StringVarP(&gitEmail, "git-email", "f", "katafygio@localhost", "Email address for git commits")
+	bindPFlag("git-email", "git-email")
 }
 
 // for whatever the reason, viper don't auto bind values from config file so we have to tell him
@@ -115,7 +127,10 @@ func bindConf(cmd *cobra.Command, args []string) {
 	gitTimeout = viper.GetDuration("git-timeout")
 	healthP = viper.GetInt("healthcheck-port")
 	resyncInt = viper.GetInt("resync-interval")
+	checkInt = viper.GetInt("check-interval")
 	exclkind = viper.GetStringSlice("exclude-kind")
 	exclobj = viper.GetStringSlice("exclude-object")
 	noGit = viper.GetBool("no-git")
+	gitAuthor = viper.GetString("git-author")
+	gitEmail = viper.GetString("git-email")
 }

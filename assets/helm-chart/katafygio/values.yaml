@@ -23,6 +23,15 @@ gitSshConfig: |
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
 
+# gitAuthor (optional) The author name used for git commits
+gitAuthor: "Katafygio"
+
+# gitEmail (optional) The email address used for git commits
+gitEmail: "katafygio@localhost"
+
+# checkInterval (optional) How long in seconds at minimum between git commits
+checkInterval: 10
+
 # healthcheckPort is the TCP port Katafygio will listen for health check requests.
 healthcheckPort: 8080
 
