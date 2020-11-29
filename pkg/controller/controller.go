@@ -28,7 +28,7 @@ import (
 var (
 	maxProcessRetry = 6
 	canaryKey       = "$katafygio canary$"
-	unexported      = []string{"selfLink", "uid", "resourceVersion", "generation"}
+	unexported      = []string{"selfLink", "uid", "resourceVersion", "generation", "managedFields"}
 )
 
 // Interface describe a standard kubernetes controller
@@ -77,7 +77,7 @@ func New(client cache.ListerWatcher,
 	excludednamespace []string,
 ) *Controller {
 
-	selector := metav1.ListOptions{LabelSelector: filter, ResourceVersion: "0"}
+	selector := metav1.ListOptions{LabelSelector: filter, ResourceVersion: "0", AllowWatchBookmarks: true}
 	lw := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
 			return client.List(selector)
@@ -234,7 +234,7 @@ func (c *Controller) processItem(key string) error {
 		for _, nsre := range c.excludedns {
 			if nsre.MatchString(namespace) {
 				// Rely on the background sync to delete these excluded files if
-				// we previously had aquired them
+				// we previously had acquired them
 				return nil
 			}
 		}

@@ -1,6 +1,6 @@
 language: go
 go:
-  - "1.13.x"
+  - "1.15.x"
 
 # needed for e2e tests (so we can start minikube)
 sudo: required

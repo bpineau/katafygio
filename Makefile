@@ -1,4 +1,4 @@
-GOLANGCI_VERSION=1.21.0
+GOLANGCI_VERSION=1.33.0
 export GO111MODULE := on
 
 all: build
