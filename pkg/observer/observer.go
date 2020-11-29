@@ -171,6 +171,7 @@ var preferredVersions = map[string]string{
 	"events:events":                     ":events",
 	"extensions:podsecuritypolicies":    "policy:podsecuritypolicies",
 	"networking.k8s.io:networkpolicies": "extensions:networkpolicies",
+	"networking.k8s.io:ingress":         "extensions:ingress",
 }
 
 func (c *Observer) expandAndFilterAPIResources(groups []*metav1.APIResourceList) resources {
