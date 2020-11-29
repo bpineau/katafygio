@@ -190,6 +190,11 @@ func (s *Store) CloneOrInit() (err error) {
 			s.Email, s.LocalDir, err)
 	}
 
+	err = appFs.MkdirAll(s.LocalDir+"/.git/info", 0744)
+	if err != nil {
+		return fmt.Errorf("failed to create git info directory: %v", err)
+	}
+
 	err = afero.WriteFile(appFs, s.LocalDir+"/.git/info/exclude", []byte(".temp-katafygio-*"), 0644)
 	if err != nil {
 		return fmt.Errorf("failed to create a git exclusion: %v", err)
