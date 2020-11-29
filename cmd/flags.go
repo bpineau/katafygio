@@ -9,25 +9,26 @@ import (
 )
 
 var (
-	cfgFile    string
-	apiServer  string
-	context    string
-	namespace  string
-	kubeConf   string
-	dryRun     bool
-	dumpMode   bool
-	logLevel   string
-	logOutput  string
-	logServer  string
-	filter     string
-	localDir   string
-	gitURL     string
-	gitTimeout time.Duration
-	healthP    int
-	resyncInt  int
-	exclkind   []string
-	exclobj    []string
-	noGit      bool
+	cfgFile        string
+	apiServer      string
+	context        string
+	namespace      string
+	exclnamespaces []string
+	kubeConf       string
+	dryRun         bool
+	dumpMode       bool
+	logLevel       string
+	logOutput      string
+	logServer      string
+	filter         string
+	localDir       string
+	gitURL         string
+	gitTimeout     time.Duration
+	healthP        int
+	resyncInt      int
+	exclkind       []string
+	exclobj        []string
+	noGit          bool
 )
 
 func bindPFlag(key string, cmd string) {
@@ -51,6 +52,9 @@ func init() {
 
 	RootCmd.PersistentFlags().StringVarP(&namespace, "namespace", "a", "", "Only dump objects from this namespace")
 	bindPFlag("namespace", "namespace")
+
+	RootCmd.PersistentFlags().StringSliceVarP(&exclnamespaces, "exclude-namespaces", "z", nil, "Namespaces to exclude. Eg. 'temp.*' as regexes. This collects all namespaces and then filters them. Don't use it with the namespace flag.")
+	bindPFlag("exclude-namespaces", "exclude-namespaces")
 
 	RootCmd.PersistentFlags().StringVarP(&kubeConf, "kube-config", "k", "", "Kubernetes configuration path")
 	bindPFlag("kube-config", "kube-config")
@@ -103,6 +107,7 @@ func bindConf(cmd *cobra.Command, args []string) {
 	apiServer = viper.GetString("api-server")
 	context = viper.GetString("context")
 	namespace = viper.GetString("namespace")
+	exclnamespaces = viper.GetStringSlice("exclude-namespaces")
 	kubeConf = viper.GetString("kube-config")
 	dryRun = viper.GetBool("dry-run")
 	dumpMode = viper.GetBool("dump-only")

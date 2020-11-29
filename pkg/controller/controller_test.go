@@ -121,7 +121,7 @@ func TestController(t *testing.T) {
 
 	evt := new(mockNotifier)
 	log := new(mockLog)
-	f := NewFactory(log, "label1=something", 60, []string{"pod:ns3/Bar3"})
+	f := NewFactory(log, "label1=something", 60, []string{"pod:ns3/Bar3"}, []string{})
 	ctrl := f.NewController(client, evt, "pod")
 
 	// this will trigger a deletion event
