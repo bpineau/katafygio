@@ -26,7 +26,7 @@ type logger interface {
 	Errorf(format string, args ...interface{})
 }
 
-// activeFiles will contain a list of active (present in cluster) objets; we'll
+// activeFiles will contain a list of active (present in cluster) objects; we'll
 // use that to periodically find and garbage collect stale objets in the git repos
 // (ie. if some objects were delete from cluster while katafygio was not running),
 // and to skip already existing and unchanged files.
@@ -132,8 +132,12 @@ func (w *Listener) remove(file string) error {
 }
 
 func (w *Listener) relativePath(file string) string {
-	root := filepath.Clean(w.localDir)
-	return strings.Replace(file, root+"/", "", 1)
+	root, err := filepath.Abs(w.localDir)
+	if err != nil {
+		// Fallback to something
+		root = filepath.Clean(w.localDir)
+	}
+	return strings.Replace(file, filepath.Clean(root+"/"), "", 1)
 }
 
 func (w *Listener) save(file string, data []byte) error {
@@ -185,9 +189,12 @@ func (w *Listener) save(file string, data []byte) error {
 func (w *Listener) deleteObsoleteFiles() {
 	w.activesLock.RLock()
 	defer w.activesLock.RUnlock()
-	root := filepath.Clean(w.localDir)
+	root, err := filepath.Abs(w.localDir)
+	if err != nil {
+		w.logger.Errorf("failed to absolute path to %s", w.localDir)
+	}
 
-	err := afero.Walk(appFs, root, func(path string, info os.FileInfo, err error) error {
+	err = afero.Walk(appFs, root, func(path string, info os.FileInfo, err error) error {
 		if info == nil {
 			return fmt.Errorf("can't stat %s", path)
 		}
