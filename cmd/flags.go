@@ -29,6 +29,7 @@ var (
 	exclkind       []string
 	exclobj        []string
 	noGit          bool
+	noOwnerRef     bool
 )
 
 func bindPFlag(key string, cmd string) {
@@ -89,6 +90,9 @@ func init() {
 	RootCmd.PersistentFlags().StringSliceVarP(&exclobj, "exclude-object", "y", nil, "Object to exclude. Eg. 'configmap:kube-system/kube-dns'")
 	bindPFlag("exclude-object", "exclude-object")
 
+	RootCmd.PersistentFlags().BoolVarP(&noOwnerRef, "exclude-having-owner-ref", "w", false, "Exclude all objects having an Owner Reference")
+	bindPFlag("exclude-having-owner-ref", "exclude-having-owner-ref")
+
 	RootCmd.PersistentFlags().StringVarP(&filter, "filter", "l", "", "Label filter. Select only objects matching the label")
 	bindPFlag("filter", "filter")
 
@@ -123,4 +127,5 @@ func bindConf(cmd *cobra.Command, args []string) {
 	exclkind = viper.GetStringSlice("exclude-kind")
 	exclobj = viper.GetStringSlice("exclude-object")
 	noGit = viper.GetBool("no-git")
+	noOwnerRef = viper.GetBool("exclude-having-owner-ref")
 }

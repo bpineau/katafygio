@@ -2,6 +2,7 @@ package controller
 
 import (
 	"flag"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -107,6 +108,39 @@ var (
 			"status": "shouldnotbethere",
 		},
 	}
+
+	obj6 = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Foo6",
+			"metadata": map[string]interface{}{
+				"name":            "Bar6",
+				"namespace":       "exclns6",
+				"ResourceVersion": "4",
+				"foo":             "canary-bar6",
+				"uid":             "00000000-0000-0000-0000-000000000046",
+				"selfLink":        "shouldnotbethere",
+			},
+			"status": "shouldnotbethere",
+		},
+	}
+
+	obj7 = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "Foo7",
+			"metadata": map[string]interface{}{
+				"name":            "Bar7",
+				"namespace":       "ns7",
+				"ResourceVersion": "4",
+				"foo":             "canary-bar7",
+				"uid":             "00000000-0000-0000-0000-000000000047",
+				"selfLink":        "shouldnotbethere",
+				"ownerReferences": "foo",
+			},
+			"status": "shouldnotbethere",
+		},
+	}
 )
 
 func init() {
@@ -121,7 +155,14 @@ func TestController(t *testing.T) {
 
 	evt := new(mockNotifier)
 	log := new(mockLog)
-	f := NewFactory(log, "label1=something", 60, []string{"pod:ns3/Bar3"}, []string{})
+
+	exclusions := &Exclusions{
+		Names:      []string{"pod:ns3/Bar3"},
+		Namespaces: []*regexp.Regexp{regexp.MustCompile("exclns.*")},
+		NoOwnerRef: true,
+	}
+
+	f := NewFactory(log, "label1=something", 60, exclusions)
 	ctrl := f.NewController(client, evt, "pod")
 
 	// this will trigger a deletion event
@@ -134,6 +175,8 @@ func TestController(t *testing.T) {
 	client.Add(obj2)
 	client.Add(obj3)
 	client.Add(obj4)
+	client.Add(obj6)
+	client.Add(obj7)
 	client.Modify(obj5)
 
 	ctrl.Start()
@@ -162,6 +205,16 @@ func TestController(t *testing.T) {
 		// ensure objet filter works as expected
 		if strings.Compare(ev.Key, "ns3/Bar3") == 0 {
 			t.Error("execludedobject filter failed")
+		}
+
+		// ensure namespace filter works as expected
+		if strings.Compare(ev.Key, "exclns6/Bar3") == 0 {
+			t.Error("exclude-namespaces filter failed")
+		}
+
+		// ensure OwnerRef filter works as expected
+		if strings.Compare(ev.Key, "ns7/Bar7") == 0 {
+			t.Error("exclude-having-owner-ref filter failed")
 		}
 
 		// ensure updates propagate
