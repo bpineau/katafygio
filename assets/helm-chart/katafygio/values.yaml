@@ -93,7 +93,7 @@ serviceAccount:
 
 image:
   repository: bpineau/katafygio
-  tag: v0.8.1
+  tag: v0.8.2
   pullPolicy: IfNotPresent
 
 # resources define the deployment's cpu and memory resources.
