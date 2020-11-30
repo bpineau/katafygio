@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"syscall"
 
 	"github.com/spf13/afero"
@@ -31,8 +32,8 @@ var (
 		Use:   appName,
 		Short: "Backup Kubernetes cluster as yaml files",
 		Long: "Backup Kubernetes cluster as yaml files in a git repository.\n" +
-			"--exclude-kind (-x) and --exclude-object (-y) may be specified several times,\n" +
-			"or once with several comma separated values.",
+			"--exclude-kind (-x), --exclude-object (-y) and --exclude-namespaces (-z)\n" +
+			"may be specified several times, or once with several comma separated values.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PreRun:        bindConf,
@@ -69,8 +70,19 @@ func runE(cmd *cobra.Command, args []string) (err error) {
 		return fmt.Errorf("failed to start git repo handler: %v", err)
 	}
 
+	exclnsre := make([]*regexp.Regexp, 0, len(exclnamespaces))
+	for _, ns := range exclnamespaces {
+		exclnsre = append(exclnsre, regexp.MustCompile(ns))
+	}
+
+	exclusions := &controller.Exclusions{
+		Names:      exclobj,
+		Namespaces: exclnsre,
+		NoOwnerRef: noOwnerRef,
+	}
+
 	evts := event.New()
-	fact := controller.NewFactory(logger, filter, resyncInt, exclobj, exclnamespaces)
+	fact := controller.NewFactory(logger, filter, resyncInt, exclusions)
 	reco := recorder.New(logger, evts, localDir, resyncInt*2, dryRun).Start()
 	obsv := observer.New(logger, restcfg, evts, fact, exclkind, namespace).Start()
 

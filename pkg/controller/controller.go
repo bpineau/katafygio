@@ -42,28 +42,33 @@ type logger interface {
 	Errorf(format string, args ...interface{})
 }
 
+// Exclusions groups filters used to ignore objects
+type Exclusions struct {
+	Names      []string
+	Namespaces []*regexp.Regexp
+	NoOwnerRef bool
+}
+
 // Factory generate controllers
 type Factory struct {
-	logger      logger
-	filter      string
-	resyncIntv  time.Duration
-	excludedobj []string
-	excludedns  []string
+	logger     logger
+	filter     string
+	resyncIntv time.Duration
+	exclusions *Exclusions
 }
 
 // Controller is a generic kubernetes controller
 type Controller struct {
-	name        string
-	stopCh      chan struct{}
-	doneCh      chan struct{}
-	syncCh      chan struct{}
-	notifier    event.Notifier
-	queue       workqueue.RateLimitingInterface
-	informer    cache.SharedIndexInformer
-	logger      logger
-	resyncIntv  time.Duration
-	excludedobj []string
-	excludedns  []*regexp.Regexp
+	name       string
+	stopCh     chan struct{}
+	doneCh     chan struct{}
+	syncCh     chan struct{}
+	notifier   event.Notifier
+	queue      workqueue.RateLimitingInterface
+	informer   cache.SharedIndexInformer
+	logger     logger
+	resyncIntv time.Duration
+	exclusions *Exclusions
 }
 
 // New return a kubernetes controller using the provided client
@@ -73,8 +78,7 @@ func New(client cache.ListerWatcher,
 	name string,
 	filter string,
 	resync time.Duration,
-	excludedobj []string,
-	excludednamespace []string,
+	exclusions *Exclusions,
 ) *Controller {
 
 	selector := metav1.ListOptions{LabelSelector: filter, ResourceVersion: "0", AllowWatchBookmarks: true}
@@ -117,23 +121,17 @@ func New(client cache.ListerWatcher,
 		},
 	})
 
-	exclnsre := make([]*regexp.Regexp, 0)
-	for _, ns := range excludednamespace {
-		exclnsre = append(exclnsre, regexp.MustCompile(ns))
-	}
-
 	return &Controller{
-		stopCh:      make(chan struct{}),
-		doneCh:      make(chan struct{}),
-		syncCh:      make(chan struct{}, 1),
-		notifier:    notifier,
-		name:        name,
-		queue:       queue,
-		informer:    informer,
-		logger:      log,
-		resyncIntv:  resync,
-		excludedobj: excludedobj,
-		excludedns:  exclnsre,
+		stopCh:     make(chan struct{}),
+		doneCh:     make(chan struct{}),
+		syncCh:     make(chan struct{}, 1),
+		notifier:   notifier,
+		name:       name,
+		queue:      queue,
+		informer:   informer,
+		logger:     log,
+		resyncIntv: resync,
+		exclusions: exclusions,
 	}
 }
 
@@ -208,7 +206,7 @@ func (c *Controller) processItem(key string) error {
 		return fmt.Errorf("error fetching %s from store: %v", key, err)
 	}
 
-	for _, obj := range c.excludedobj {
+	for _, obj := range c.exclusions.Names {
 		if strings.Compare(strings.ToLower(obj), strings.ToLower(c.name+":"+key)) == 0 {
 			return nil
 		}
@@ -231,13 +229,17 @@ func (c *Controller) processItem(key string) error {
 	}
 
 	if namespace, ok := md["namespace"].(string); ok {
-		for _, nsre := range c.excludedns {
+		for _, nsre := range c.exclusions.Namespaces {
 			if nsre.MatchString(namespace) {
 				// Rely on the background sync to delete these excluded files if
 				// we previously had acquired them
 				return nil
 			}
 		}
+	}
+
+	if _, ok := md["ownerReferences"]; ok && c.exclusions.NoOwnerRef {
+		return nil
 	}
 
 	yml, err := yaml.Marshal(obj)
@@ -254,17 +256,16 @@ func (c *Controller) enqueue(notif *event.Notification) {
 }
 
 // NewFactory create a controller factory
-func NewFactory(logger logger, filter string, resync int, excludedobj []string, excludedns []string) *Factory {
+func NewFactory(logger logger, filter string, resync int, exclusions *Exclusions) *Factory {
 	return &Factory{
-		logger:      logger,
-		filter:      filter,
-		resyncIntv:  time.Duration(resync) * time.Second,
-		excludedobj: excludedobj,
-		excludedns:  excludedns,
+		logger:     logger,
+		filter:     filter,
+		resyncIntv: time.Duration(resync) * time.Second,
+		exclusions: exclusions,
 	}
 }
 
 // NewController create a controller.Controller
 func (f *Factory) NewController(client cache.ListerWatcher, notifier event.Notifier, name string) Interface {
-	return New(client, notifier, f.logger, name, f.filter, f.resyncIntv, f.excludedobj, f.excludedns)
+	return New(client, notifier, f.logger, name, f.filter, f.resyncIntv, f.exclusions)
 }

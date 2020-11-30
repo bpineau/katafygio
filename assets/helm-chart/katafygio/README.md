@@ -18,7 +18,7 @@ This chart installs a [Katafygio](https://github.com/bpineau/katafygio) deployme
 
 ## Chart Details
 
-If your backups are flooded by commits from uninteresting changes, you may filter out irrelevant objects using the `excludeKind` and `excludeObject` options.
+If your backups are flooded by commits from uninteresting changes, you may filter out irrelevant objects using the `excludeKind`, `excludeObject`, `excludeNamespaces`, and `excludeHavingOwnerRef` options.
 
 By default, the chart will dump (and version) the clusters content in /tmp/kf-dump (configurable with `localDir`).
 This can be useful as is, to keep a local and ephemeral changes history. To benefit from long term, out of cluster, and centrally reachable persistence, you may provide the address of a remote git repository (with `gitUrl`), where all changes will be pushed.
@@ -59,6 +59,8 @@ The following table lists the configurable parameters of the Katafygio chart and
 | `healthcheckPort`       | The port Katafygio will listen for health checks requests   | `8080`                               |
 | `excludeKind`           | Object kinds to ignore                                      | `{"replicaset","endpoints","event"}` |
 | `excludeObject`         | Specific objects to ignore (eg. "configmap:default/foo")    | `nil`                                |
+| `excludeNamespaces`     | List of regexps matching namespaces names to ignore         | `nil`                                |
+| `excludeHavingOwnerRef` | Ignore all objects having an Owner Reference                | `false`                              |
 | `rbac.create`           | Enable or disable RBAC roles and bindings                   | `true`                               |
 | `rbac.apiVersion`       | RBAC API version                                            | `v1`                                 |
 | `serviceAccount.create` | Whether a ServiceAccount should be created                  | `true`                               |

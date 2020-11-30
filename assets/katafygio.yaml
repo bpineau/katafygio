@@ -33,11 +33,11 @@ resync-interval: 900
 # or daemonsets (which are already dumped), endpoints (managed by services,
 # already dumped), and noisy stuff (events, nodes...).
 #exclude-kind:
-#  - secret
-#  - pod
-#  - replicaset
-#  - node
-#  - event
+#  - secrets
+#  - pods
+#  - replicasets
+#  - nodes
+#  - events
 #  - endpoints
 
 # Example exclusion for specific objects:
@@ -45,10 +45,19 @@ resync-interval: 900
 #  - configmap:kube-system/datadog-leader-elector
 #  - deployment:default/testdeploy
 
+# Exclude objects (like pods, replicasets) generated/managed by other
+# objects we already archive:
+#exclude-having-owner-ref: true
+
+# Exclude namespaces matching some regular expressions:
+# exclude-namespaces:
+#  - jenkins.*
+#  - temp-.*
+
 # Only dump objects belonging to a specific namespace
 #namespace:
 
-# Set to true o dump once and exit (instead of continuously dumping new changes)
+# Set to true to dump once and exit (instead of continuously dumping new changes)
 dump-only: false
 
 # Set to true to disable git versionning

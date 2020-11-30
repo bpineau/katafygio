@@ -38,14 +38,20 @@ logOutput: stdout
 
 # excludeKind is an array of excluded (not backuped) Kubernetes objects kinds.
 excludeKind:
-  - replicaset
+  - replicasets
   - endpoints
-  - event
+  - events
 
 # excludeObject is an array of specific Kubernetes objects to exclude from dumps
 # (the format is: objectkind:namespace/objectname).
 # excludeObject:
 #  - "configmap:kube-system/leader-elector"
+
+# excludeNamespaces is an array of regexp matching excluded namespaces (v0.8.2+)
+#excludeNamespaces: []
+
+# excludeHavingOwnerRef defines wether we should filter out objects having an owner reference (v0.8.2+).
+excludeHavingOwnerRef: false
 
 # resyncInterval is the interval (in seconds) between full catch-up resyncs
 # (to catch possibly missed events). Set to 0 to disable resyncs.
