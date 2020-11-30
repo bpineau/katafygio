@@ -34,7 +34,7 @@ type dumpStep struct {
 
 var testsTable = []dumpStep{
 	{"kubectl create ns kf-e2e-test-1", "kubectl delete ns kf-e2e-test-1", "namespace-kf-e2e-test-1.yaml", true},
-	{"kubectl run kf-e2e-test-2 --image=gcr.io/google_containers/pause-amd64:3.0", "kubectl delete deploy kf-e2e-test-2", "default/deployment-kf-e2e-test-2.yaml", true},
+	{"kubectl create deployment kf-e2e-test-2 --image=gcr.io/google_containers/pause-amd64:3.0", "kubectl delete deploy kf-e2e-test-2", "default/deployment-kf-e2e-test-2.yaml", true},
 	{"kubectl expose deployment kf-e2e-test-2 --port=80 --target-port=8000 --name=kf-e2e-test-3", "kubectl delete svc kf-e2e-test-3", "default/service-kf-e2e-test-3.yaml", true},
 	{"kubectl delete service kf-e2e-test-3", "", "default/service-kf-e2e-test-3.yaml", false},
 	{"kubectl delete namespace kf-e2e-test-1", "", "namespace-kf-e2e-test-1.yaml", false},

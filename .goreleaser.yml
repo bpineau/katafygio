@@ -24,9 +24,6 @@ release:
   # don't autopublish
   draft: true
 
-sign:
-  artifacts: checksum
-
 archives:
 - id: katafygio
   format: binary
@@ -47,7 +44,7 @@ dockers:
 
 nfpms:
 -
-  name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}"
+  file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}"
   homepage: https://github.com/bpineau/katafygio
   description: Discover and continuously backup Kubernetes objets as yaml files in git
   maintainer: Benjamin Pineau <ben.pineau@gmail.com>
@@ -68,8 +65,8 @@ nfpms:
       replacements:
         amd64: x86_64
         386: i686
-      name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+      file_name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     deb:
       replacements:
         386: i386
-      name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+      file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
