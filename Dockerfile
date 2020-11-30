@@ -3,7 +3,7 @@ WORKDIR /go/src/github.com/bpineau/katafygio
 COPY . .
 RUN make build
 
-FROM alpine:3.10
+FROM alpine:3.12
 RUN apk upgrade --no-cache && \
     apk --no-cache add ca-certificates git openssh-client tini
 RUN install -d -o nobody -g nobody /var/lib/katafygio/data
