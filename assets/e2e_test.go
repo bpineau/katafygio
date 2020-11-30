@@ -64,7 +64,7 @@ func TestMain(m *testing.M) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
-		cmd := exec.CommandContext(ctx, "katafygio", "-e", dumpPath)
+		cmd := exec.CommandContext(ctx, "../katafygio", "-e", dumpPath)
 		err := cmd.Run()
 		if err != nil && err.Error() != "signal: killed" {
 			fmt.Printf("failed to spawn katafygio: %s", err.Error())

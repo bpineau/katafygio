@@ -1,0 +1,48 @@
+name: CI
+on:
+  # don't double build on PRs.
+  pull_request:
+  push:
+    branches:
+    - master
+    tags-ignore:
+      - '**'
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-20.04
+    steps:
+
+    - name: Set up Go 1.15
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.15
+      id: go
+
+    - name: Check out
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Create k8s cluster
+      uses: helm/kind-action@v1.1.0
+      with:
+        version: v0.9.0
+
+    - name: Build
+      run: make build
+
+    - name: Lint
+      run: make lint
+
+    - name: Test
+      run: make test
+
+    - name: E2e
+      run: make e2e
+
+    - name: Coverage
+      run: make coverall
+      env:
+        COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -11,7 +11,7 @@ const nonExistentPath = "\\/non / existent / $path$"
 func TestClientSet(t *testing.T) {
 	here, _ := os.Getwd()
 	_ = os.Setenv("HOME", here+"/../../assets")
-	cs, err := New("", "", "")
+	cs, err := New("", "", here+"/../../assets/.kube/config")
 	if err != nil {
 		t.Fatal(err)
 	}
