@@ -3,24 +3,22 @@ export GO111MODULE := on
 
 all: build
 
-tools:
-	which golangci-lint || ( \
-	  curl -sfL "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_VERSION}/golangci-lint-${GOLANGCI_VERSION}-linux-amd64.tar.gz" | \
-	  tar xz --strip-components 1 --wildcards '*/golangci-lint' && \
-	  chmod 755 golangci-lint && \
-	  mv golangci-lint ${GOPATH}/bin/ \
-	)
-	which goveralls || go get github.com/mattn/goveralls
+ifndef $(GOPATH)
+    GOPATH=$(shell go env GOPATH)
+    export GOPATH
+endif
 
-lint:
-	@# govet, errcheck etc are already on by default. this -E enable extra linters:
-	golangci-lint run -E gofmt,golint,unconvert,dupl,goimports,misspell,maligned,stylecheck
+${GOPATH}/bin/golangci-lint:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | \
+		sh -s -- -b ${GOPATH}/bin v${GOLANGCI_VERSION}
+
+${GOPATH}/bin/goveralls:
+	GO111MODULE=off go get github.com/mattn/goveralls
+
+tools: ${GOPATH}/bin/golangci-lint ${GOPATH}/bin/goveralls
 
 man:
 	go run assets/manpage.go
-
-fmt:
-	go fmt ./...
 
 build:
 	env CGO_ENABLED=0 go build
@@ -29,18 +27,21 @@ install:
 	env CGO_ENABLED=0 go install
 
 clean:
-	rm -rf dist/
+	rm -rf dist/ profile.cov katafygio katafygio.8.gz
 	go clean
 
-coverall:
-	goveralls -coverprofile=profile.cov -service=travis-ci -package github.com/bpineau/katafygio/pkg/...
-
-e2e:
-	kubectl get ns >/dev/null || exit 1
+e2e: build
+	kubectl version
 	go test -count=1 -v assets/e2e_test.go
 
 test:
-	go test github.com/bpineau/katafygio/...
-	go test -race -cover -coverprofile=profile.cov github.com/bpineau/katafygio/...
+	go test -covermode atomic -coverprofile=profile.cov ./...
 
-.PHONY: tools lint fmt install clean coverall test all
+lint: ${GOPATH}/bin/golangci-lint
+	${GOPATH}/bin/golangci-lint run --timeout 5m \
+	  -E gofmt,golint,unconvert,dupl,goimports,maligned,stylecheck # extra linters
+
+coverall: ${GOPATH}/bin/goveralls
+	${GOPATH}/bin/goveralls -coverprofile=profile.cov -service=github
+
+.PHONY: tools man build install clean e2e test lint coverall
