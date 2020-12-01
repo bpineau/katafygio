@@ -1,5 +1,19 @@
+# Goreleaser configuration to build and publish releases on new v* github tags
+# (via Github Actions, cf. .github/workflows/release.yml):
+# - Build (x86, x86_64, arm64) binaries for Linux, Windows and Mac
+# - Build deb and rpm packages
+# - Build docker images
+# - Publish Github releases (as draft, for manual confirmation)
+# - Publish docker images (to docker hub and quay.io)
+# - Publish homebrew formula (to https://github.com/bpineau/homebrew-tap)
+
+# Test changes to this file localy with:
+#   env HOMEBREW_TAP_GITHUB_TOKEN=fake goreleaser release --rm-dist --skip-publish --skip-sign --skip-validate
+# Verify goreleaser upgrades with (cf. https://goreleaser.com/deprecations/):
+#   goreleaser check
+
 builds:
-  -
+  - id: default
     ldflags: -s -w -X github.com/bpineau/katafygio/cmd.version={{.Version}}
     env:
       - CGO_ENABLED=0
@@ -15,18 +29,35 @@ builds:
       - "386"
     hooks:
       post: make man
+  # need for "brews" publisher, that doesn't work with flat binaries (see "archives" below)
+  - id: macosx-tarball
+    ldflags: -s -w -X github.com/bpineau/katafygio/cmd.version={{.Version}}
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      # TODO will be supported in go 1.16 (see https://github.com/goreleaser/goreleaser/issues/1903)
+      #- arm64
+    hooks:
+      post: make man
 
 before:
   hooks:
   - go mod download
 
 release:
-  # don't autopublish
+  # publish github releases as draft, so a human can check and validate
   draft: true
 
 archives:
 - id: katafygio
   format: binary
+  builds: [default] # publish easy to curl flag files rather than tarballs
+- id: macosx-tarball
+  builds: [macosx-tarball] # for brews below (needs a tarball)
 
 changelog:
   filters:
@@ -34,13 +65,25 @@ changelog:
       - Merge
 
 dockers:
+  # TODO when stable, use "docker_manifest" to publish multi-arch images
   - image_templates:
     - "bpineau/katafygio:latest"
     - "bpineau/katafygio:{{ .Tag }}"
+    - "bpineau/katafygio:v{{ .Major }}.{{ .Minor }}"
+    - "quay.io/bpineau/katafygio:latest"
+    - "quay.io/bpineau/katafygio:{{ .Tag }}"
+    - "quay.io/bpineau/katafygio:v{{ .Major }}.{{ .Minor }}"
     goos: linux
     goarch: amd64
+    builds: [default]
     dockerfile: assets/Dockerfile.goreleaser
-    skip_push: true
+    skip_push: false
+    build_flag_templates:
+    - "--pull"
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.title={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{.Version}}"
 
 nfpms:
 -
@@ -70,3 +113,22 @@ nfpms:
       replacements:
         386: i386
       file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+
+brews:
+  - name: katafygio
+    ids: [macosx-tarball] # because brews publisher doesn't accept flat binaries
+
+    tap:
+      owner: bpineau
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+
+    folder: Formula
+    homepage: "https://github.com/bpineau/katafygio"
+    description: Discover and continuously backup Kubernetes objets as yaml files in git
+    license: MIT
+    skip_upload: false
+
+    test: |
+      system "#{bin}/katafygio version"
+
