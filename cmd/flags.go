@@ -94,7 +94,7 @@ func init() {
 	bindPFlag("exclude-having-owner-ref", "exclude-having-owner-ref")
 
 	RootCmd.PersistentFlags().StringVarP(&selector, "filter", "l", "", "Label selector. Select only objects matching the label")
-	bindPFlag("selector", "selector")
+	bindPFlag("filter", "filter")
 
 	RootCmd.PersistentFlags().IntVarP(&healthP, "healthcheck-port", "p", 0, "Port for answering healthchecks on /health url")
 	bindPFlag("healthcheck-port", "healthcheck-port")
