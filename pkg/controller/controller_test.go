@@ -186,23 +186,18 @@ func TestController(t *testing.T) {
 	}
 	ctrl.Stop()
 
-	gotFoo2 := false
 	for _, ev := range evt.evts {
-		// ensure cleanup filters works as expected
-		if strings.Contains(string(ev.Object), "shouldnotbethere") {
-			t.Error("object cleanup filters didn't work")
-		}
-
 		// ensure deletion notifications pops up as expected
 		if strings.Compare(ev.Key, "ns1/Bar1") == 0 && ev.Action != event.Delete {
 			t.Error("deletion notification failed")
 		}
 
-		if strings.Compare(ev.Key, "ns2/Bar2") == 0 {
-			gotFoo2 = true
+		// ensure cleanup label selectors filter works as expected
+		if strings.Contains(string(ev.Object), "shouldnotbethere") {
+			t.Error("labels selectors filters didn't work")
 		}
 
-		// ensure objet filter works as expected
+		// ensure objet name filter works as expected
 		if strings.Compare(ev.Key, "ns3/Bar3") == 0 {
 			t.Error("execludedobject filter failed")
 		}
@@ -221,9 +216,5 @@ func TestController(t *testing.T) {
 		if strings.Contains(string(ev.Object), "canary-bar4") {
 			t.Error("update didn't propagate")
 		}
-	}
-
-	if !gotFoo2 {
-		t.Errorf("we should have notified obj2")
 	}
 }

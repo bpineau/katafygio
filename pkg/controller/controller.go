@@ -52,7 +52,7 @@ type Exclusions struct {
 // Factory generate controllers
 type Factory struct {
 	logger     logger
-	filter     string
+	selector   string
 	resyncIntv time.Duration
 	exclusions *Exclusions
 }
@@ -76,18 +76,18 @@ func New(client cache.ListerWatcher,
 	notifier event.Notifier,
 	log logger,
 	name string,
-	filter string,
+	selector string,
 	resync time.Duration,
 	exclusions *Exclusions,
 ) *Controller {
 
-	selector := metav1.ListOptions{LabelSelector: filter, ResourceVersion: "0", AllowWatchBookmarks: true}
+	lopts := metav1.ListOptions{LabelSelector: selector, ResourceVersion: "0", AllowWatchBookmarks: true}
 	lw := &cache.ListWatch{
 		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-			return client.List(selector)
+			return client.List(lopts)
 		},
 		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-			return client.Watch(selector)
+			return client.Watch(lopts)
 		},
 	}
 
@@ -256,10 +256,10 @@ func (c *Controller) enqueue(notif *event.Notification) {
 }
 
 // NewFactory create a controller factory
-func NewFactory(logger logger, filter string, resync int, exclusions *Exclusions) *Factory {
+func NewFactory(logger logger, selector string, resync int, exclusions *Exclusions) *Factory {
 	return &Factory{
 		logger:     logger,
-		filter:     filter,
+		selector:   selector,
 		resyncIntv: time.Duration(resync) * time.Second,
 		exclusions: exclusions,
 	}
@@ -267,5 +267,5 @@ func NewFactory(logger logger, filter string, resync int, exclusions *Exclusions
 
 // NewController create a controller.Controller
 func (f *Factory) NewController(client cache.ListerWatcher, notifier event.Notifier, name string) Interface {
-	return New(client, notifier, f.logger, name, f.filter, f.resyncIntv, f.exclusions)
+	return New(client, notifier, f.logger, name, f.selector, f.resyncIntv, f.exclusions)
 }

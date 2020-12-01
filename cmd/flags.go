@@ -20,7 +20,7 @@ var (
 	logLevel       string
 	logOutput      string
 	logServer      string
-	filter         string
+	selector       string
 	localDir       string
 	gitURL         string
 	gitTimeout     time.Duration
@@ -93,8 +93,8 @@ func init() {
 	RootCmd.PersistentFlags().BoolVarP(&noOwnerRef, "exclude-having-owner-ref", "w", false, "Exclude all objects having an Owner Reference")
 	bindPFlag("exclude-having-owner-ref", "exclude-having-owner-ref")
 
-	RootCmd.PersistentFlags().StringVarP(&filter, "filter", "l", "", "Label filter. Select only objects matching the label")
-	bindPFlag("filter", "filter")
+	RootCmd.PersistentFlags().StringVarP(&selector, "filter", "l", "", "Label selector. Select only objects matching the label")
+	bindPFlag("selector", "selector")
 
 	RootCmd.PersistentFlags().IntVarP(&healthP, "healthcheck-port", "p", 0, "Port for answering healthchecks on /health url")
 	bindPFlag("healthcheck-port", "healthcheck-port")
@@ -118,7 +118,7 @@ func bindConf(cmd *cobra.Command, args []string) {
 	logLevel = viper.GetString("log-level")
 	logOutput = viper.GetString("log-output")
 	logServer = viper.GetString("log-server")
-	filter = viper.GetString("filter")
+	selector = viper.GetString("filter")
 	localDir = viper.GetString("local-dir")
 	gitURL = viper.GetString("git-url")
 	gitTimeout = viper.GetDuration("git-timeout")
