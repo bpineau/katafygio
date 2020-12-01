@@ -112,9 +112,12 @@ On MacOS, you can use the brew formula:
 brew install bpineau/tap/katafygio
 ```
 
-You can also deploy with the provided [helm](https://helm.sh/) chart:
+You can also deploy with the provided [helm](https://helm.sh/) chart and/or repository:
 ```shell
-helm install --name kf-backups assets/helm-chart/katafygio/
+helm repo add katafygio https://bpineau.github.io/katafygio
+helm repo update
+
+helm install kube-backups katafygio/katafygio
 ```
 
 ## See Also
