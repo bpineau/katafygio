@@ -1,0 +1,28 @@
+name: helm-release
+
+on:
+  push:
+    # release chart on every master merge that touch charts
+    branches:
+    - master
+    paths:
+    - 'assets/helm-chart/**'
+
+jobs:
+  publish-helm-chart:
+    name: Publish helm chart
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: "0"
+
+      - name: Publish Helm chart
+        uses: stefanprodan/helm-gh-pages@919cd2c
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          charts_dir: assets/helm-chart
+          charts_url: https://bpineau.github.io/katafygio
+          branch: gh-pages
+          helm_version: 3.4.1
+
