@@ -1,0 +1,25 @@
+apiVersion: v1
+entries:
+  katafygio:
+  - apiVersion: v1
+    appVersion: 0.8.2
+    created: "2020-12-01T16:59:05.565621883Z"
+    description: Continuously backup Kubernetes objets as YAML files in git
+    digest: 48a6163fc57202fac7c7760e6ccae33c421695856416ab1a00d55ada79070ae2
+    home: https://github.com/bpineau/katafygio
+    icon: https://raw.githubusercontent.com/bpineau/katafygio/master/assets/logo/480px-katafygio.png
+    keywords:
+    - backup
+    - dump
+    - katafygio
+    - git
+    maintainers:
+    - email: ben.pineau@gmail.com
+      name: bpineau
+    name: katafygio
+    sources:
+    - https://github.com/bpineau/katafygio
+    urls:
+    - https://bpineau.github.io/katafygio/katafygio-0.5.0.tgz
+    version: 0.5.0
+generated: "2020-12-01T16:59:05.564425008Z"
