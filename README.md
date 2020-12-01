@@ -17,12 +17,12 @@ katafygio --no-git --dump-only --local-dir /tmp/clusterdump/
 
 To create a local git repository and continuously save the cluster content:
 ```bash
-katafygio --local-dir /tmp/kfdump
+katafygio --local-dir /tmp/clusterdump/
 ```
 
 To continuously push changes to a remote git repository:
 ```bash
-katafygio --git-url https://user:token@github.com/myorg/myrepos.git --local-dir /tmp/kfdump
+katafygio --git-url https://user:token@github.com/myorg/myrepos.git --local-dir /tmp/clusterdump/
 ```
 
 Filtering out irrelevant objects (esp. ReplicaSets and Pods) with `-w`, `-x`, `-y`
@@ -31,15 +31,16 @@ and `-z` is useful to keep a concise git history.
 ```bash
 # Filtering out objects having an owner reference (eg. managed pods or replicasets,
 # from Deployments, Daemonsets etc that we already archive), secrets (confidential),
-# events and nodes (irrelevant), and a configmap named "leader-elector" that has
-# low value and is causing commits churn:
+# events and nodes (irrelevant), helm secrets/configmap releases, and a configmap
+# named "leader-elector" that has low value and is causing commits churn:
 
 katafygio \
-  --local-dir /tmp/kfdump \
+  --local-dir /tmp/clusterdump/ \
   --git-url https://user:token@github.com/myorg/myrepos.git \
   --exclude-having-owner-ref \
   --exclude-kind secrets,events,nodes,endpoints \
-  --exclude-object configmap:kube-system/leader-elector
+  --exclude-object configmap:kube-system/leader-elector \
+  --filter 'owner!=helm'
 ```
 
 You can also use the [docker image](https://hub.docker.com/r/bpineau/katafygio/).
@@ -69,7 +70,7 @@ Flags:
   -x, --exclude-kind strings         Ressource kind to exclude. Eg. 'deployment'
   -z, --exclude-namespaces strings   Namespaces to exclude. Eg. 'temp.*' as regexes. This collects all namespaces and then filters them. Don't use it with the namespace flag.
   -y, --exclude-object strings       Object to exclude. Eg. 'configmap:kube-system/kube-dns'
-  -l, --filter string                Label filter. Select only objects matching the label
+  -l, --filter string                Label selector. Select only objects matching the label
   -t, --git-timeout duration         Git operations timeout (default 5m0s)
   -g, --git-url string               Git repository URL
   -p, --healthcheck-port int         Port for answering healthchecks on /health url
@@ -92,7 +93,7 @@ The environment are the same as command line options, in uppercase, prefixed by 
 
 ```
 export KF_GIT_URL=https://user:token@github.com/myorg/myrepos.git
-export KF_LOCAL_DIR=/tmp/kfdump
+export KF_LOCAL_DIR=/tmp/clusterdump
 export KF_LOG_LEVEL=info
 export KF_EXCLUDE_KIND="pod ep rs clusterrole"
 
@@ -105,7 +106,8 @@ export KUBECONFIG=/tmp/kconfig
 You can find pre-built binaries in the [releases](https://github.com/bpineau/katafygio/releases) page,
 ready to run on your desktop or in a Kubernetes cluster.
 
-We also provide a [docker image](https://hub.docker.com/r/bpineau/katafygio/).
+We also provide a docker image on [docker hub](https://hub.docker.com/r/bpineau/katafygio/)
+and on [quay.io](https://quay.io/bpineau/katafygio).
 
 On MacOS, you can use the brew formula:
 ```bash
@@ -121,5 +123,5 @@ helm install --name kf-backups assets/helm-chart/katafygio/
 
 * [Heptio Velero](https://github.com/heptio/velero) does sophisticated clusters backups, including volumes
 * [Stash](https://github.com/appscode/stash) backups volumes
-* [etcd backup operator](https://github.com/coreos/etcd-operator)
+* [etcd backup operator](https://github.com/coreos/etcd-operator) save etcd dumps (archived project)
 
