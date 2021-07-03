@@ -39,8 +39,7 @@ builds:
       - darwin
     goarch:
       - amd64
-      # TODO will be supported in go 1.16 (see https://github.com/goreleaser/goreleaser/issues/1903)
-      #- arm64
+      - arm64
     hooks:
       post: make man
 
@@ -75,7 +74,7 @@ dockers:
     - "quay.io/bpineau/katafygio:v{{ .Major }}.{{ .Minor }}"
     goos: linux
     goarch: amd64
-    builds: [default]
+    ids: [default]
     dockerfile: assets/Dockerfile.goreleaser
     skip_push: false
     build_flag_templates:
@@ -99,10 +98,12 @@ nfpms:
     - rpm
   dependencies:
     - git
-  config_files:
-    "./assets/katafygio.yaml": "/etc/katafygio/katafygio.yaml"
-  files:
-    "./katafygio.8.gz": "/usr/share/man/man8/katafygio.8.gz"
+  contents:
+    - src: ./assets/katafygio.yaml
+      dst: /etc/katafygio/katafygio.yaml
+      type: config
+    - src: ./katafygio.8.gz
+      dst: /usr/share/man/man8/katafygio.8.gz
   overrides:
     rpm:
       replacements:
@@ -128,6 +129,9 @@ brews:
     description: Discover and continuously backup Kubernetes objets as yaml files in git
     license: MIT
     skip_upload: false
+
+    install: |
+      bin.install "katafygio"
 
     test: |
       system "#{bin}/katafygio version"

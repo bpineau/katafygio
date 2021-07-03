@@ -1,4 +1,4 @@
-FROM golang:1.15 as builder
+FROM golang:1.16 as builder
 WORKDIR /go/src/github.com/bpineau/katafygio
 COPY . .
 RUN make build
