@@ -11,7 +11,7 @@ import (
 
 func loadConfigFile() {
 	viper.SetConfigType("yaml")
-	viper.SetConfigName(appName)
+	viper.SetConfigName(appName + ".yaml")
 
 	// all possible config file paths, by priority
 	viper.AddConfigPath("/etc/katafygio/")
@@ -32,8 +32,8 @@ func loadConfigFile() {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		_, ok := err.(viper.ConfigParseError)
-		if ok {
+		_, ok := err.(viper.ConfigFileNotFoundError)
+		if !ok {
 			log.Fatalf("Can't read config file: %v\n", err)
 		}
 	}

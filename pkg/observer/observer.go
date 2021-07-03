@@ -5,6 +5,7 @@
 package observer
 
 import (
+	"context"
 	"strings"
 	"sync"
 	"time"
@@ -147,10 +148,10 @@ func (c *Observer) refresh() error {
 		}
 		lw := &cache.ListWatch{
 			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-				return c.cpool.Resource(resource).Namespace(namespace).List(options)
+				return c.cpool.Resource(resource).Namespace(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-				return c.cpool.Resource(resource).Namespace(namespace).Watch(options)
+				return c.cpool.Resource(resource).Namespace(namespace).Watch(context.Background(), options)
 			},
 		}
 
