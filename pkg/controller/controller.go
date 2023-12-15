@@ -28,7 +28,7 @@ import (
 var (
 	maxProcessRetry = 6
 	canaryKey       = "$katafygio canary$"
-	unexported      = []string{"selfLink", "uid", "resourceVersion", "generation", "managedFields"}
+	unexported      = []string{"selfLink", "resourceVersion", "generation", "managedFields"}
 )
 
 // Interface describe a standard kubernetes controller
@@ -222,7 +222,7 @@ func (c *Controller) processItem(key string) error {
 
 	// clear irrelevant attributes
 	uc := obj.UnstructuredContent()
-	delete(uc, "status")
+	//delete(uc, "status")
 	md := uc["metadata"].(map[string]interface{})
 	for _, attr := range unexported {
 		delete(md, attr)
